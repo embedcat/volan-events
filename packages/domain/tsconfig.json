@@ -1,0 +1,8 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		// Никаких типов окружения: правила турнира не зависят ни от браузера, ни от Node
+		"types": []
+	},
+	"include": ["src"]
+}

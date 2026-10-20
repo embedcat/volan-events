@@ -7,6 +7,8 @@ dist/
 build/
 .svelte-kit/
 .vite/
+.output/
+vite.config.*.timestamp-*
 *.tsbuildinfo
 
 # Тесты

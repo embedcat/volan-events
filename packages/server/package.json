@@ -1,0 +1,23 @@
+{
+	"name": "@volan/server",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tsx watch src/main.ts",
+		"build": "node build.js",
+		"start": "node dist/main.js",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@volan/domain": "workspace:*",
+		"fastify": "^5.12.7"
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"esbuild": "catalog:",
+		"tsx": "^4.23.15",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
+	}
+}

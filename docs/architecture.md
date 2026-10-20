@@ -112,17 +112,19 @@ SQLite через Drizzle (драйвер better-sqlite3).
 
 | Часть | Выбор |
 |---|---|
-| Язык | TypeScript везде |
+| Язык | TypeScript 6.0 везде (7.x пока не поддерживают typescript-eslint, svelte-check, SvelteKit) |
 | Среда сервера | Node.js 24 LTS |
 | HTTP-сервер | Fastify |
+| Запуск и сборка сервера | tsx в разработке, esbuild в продакшене |
 | База | SQLite, Drizzle ORM, better-sqlite3 |
 | Схемы и проверка данных | Zod (общие для клиента и сервера) |
-| Интерфейс | Svelte, SvelteKit в режиме SPA |
+| Интерфейс | Svelte 5, SvelteKit 3 в режиме SPA (adapter-static), Vite 8 |
 | Работа без сети | vite-plugin-pwa (service worker), Dexie (IndexedDB) |
 | Обновления | SSE + HTTP |
-| Монорепозиторий | pnpm workspaces |
-| Тесты | Vitest; позже Playwright для сценариев в браузере |
-| CI | GitHub Actions |
+| Монорепозиторий | pnpm 12 workspaces, каталог общих версий |
+| Проверка кода | ESLint (typescript-eslint, eslint-plugin-svelte) + Prettier |
+| Тесты | Vitest 5; позже Playwright для сценариев в браузере |
+| CI | GitHub Actions: lint, typecheck, test, build на push в master и PR |
 | Оформление | свой минимальный CSS, светлая и тёмная тема по системе, без UI-библиотек |
 
 Код и идентификаторы — на английском, комментарии и документация — на русском,

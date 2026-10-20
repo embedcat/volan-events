@@ -1,0 +1,17 @@
+packages:
+  - packages/*
+
+# Общие версии для нескольких пакетов: в package.json пишется "catalog:"
+catalog:
+  '@types/node': ^24.19.2
+  esbuild: ^0.28.2
+  svelte: ^5.57.2
+  # 6.0.x: typescript-eslint, svelte-check и SvelteKit пока не поддерживают TypeScript 7
+  typescript: ~6.0.3
+  vitest: ^5.0.5
+
+# Пакеты, которым разрешено выполнять скрипты при установке
+allowBuilds:
+  esbuild: true
+
+engineStrict: true
