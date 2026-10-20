@@ -63,3 +63,21 @@ export function plural(n: number, [one, few, many]: [string, string, string]): s
 
 export const MATCHES: [string, string, string] = ['матч', 'матча', 'матчей'];
 export const ROUNDS: [string, string, string] = ['тур', 'тура', 'туров'];
+
+// Сколько полных минут прошло с момента iso до now (мс)
+export function minutesSince(iso: string, now: number): number {
+	return Math.max(0, Math.floor((now - Date.parse(iso)) / 60_000));
+}
+
+// «14 мин», «1 ч 05 мин»
+export function formatMinutes(minutes: number): string {
+	if (minutes < 60) return `${minutes} мин`;
+	return `${Math.floor(minutes / 60)} ч ${String(minutes % 60).padStart(2, '0')} мин`;
+}
+
+// «12:05» по часам устройства
+export function formatTime(iso: string): string {
+	const date = new Date(iso);
+	const pad = (n: number) => String(n).padStart(2, '0');
+	return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

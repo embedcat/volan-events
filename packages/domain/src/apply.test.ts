@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { suggestMatch } from './queue';
+import { suggestForCourts, suggestMatch } from './queue';
 import {
 	GROUP,
 	createEvent,
@@ -454,6 +454,20 @@ describe('вызов на корт', () => {
 		s = run(s, { type: 'match.call', payload: { matchId: matchByNumber(s, 2).id, court: 2 } });
 		// все оставшиеся матчи с кем-то из e1–e4, все на кортах
 		expect(suggestMatch(s)).toBeUndefined();
+	});
+
+	it('подсказки для нескольких свободных кортов не повторяют игроков', () => {
+		let s = runningEvent(4, 3);
+		const numbers = (map: Map<number, { number: number }>) =>
+			Object.fromEntries([...map].map(([court, m]) => [court, m.number]));
+		// №1 e1–e4 на корт 1, №2 e2–e3 на корт 2, третьему корту подходящего матча нет
+		expect(numbers(suggestForCourts(s))).toEqual({ 1: 1, 2: 2 });
+
+		s = run(s, { type: 'match.call', payload: { matchId: matchByNumber(s, 1).id, court: 2 } });
+		expect(numbers(suggestForCourts(s))).toEqual({ 1: 2 });
+
+		s = run(s, { type: 'court.setEnabled', payload: { court: 1, enabled: false } });
+		expect(numbers(suggestForCourts(s))).toEqual({ 3: 2 });
 	});
 });
 

@@ -3,11 +3,22 @@ import {
 	type Discipline,
 	type Entry,
 	type EventState,
+	type GameScore,
 	type Group,
 	type Match,
-	categoryCode
+	type MatchFormat,
+	type MatchResult,
+	type Side,
+	type Standings,
+	categoryCode,
+	classifyGame,
+	computeStandings,
+	gamePointsAt,
+	lastFinishedAt,
+	matchPlayerIds
 } from '@volan/domain';
 import { MATCHES, ROUNDS, plural } from './format.js';
+import { type NameLookup, entrySurnames } from './names.js';
 
 export const DISCIPLINE_LABEL: Record<Discipline, string> = {
 	MS: 'Мужской одиночный',
@@ -99,4 +110,99 @@ export function readiness(state: EventState): { items: ReadinessItem[]; ready: b
 		});
 	}
 	return { items, ready: items.every((i) => i.ok) };
+}
+
+export function matchFormat(state: EventState, match: Match): MatchFormat {
+	return state.stages[match.stageId]?.format ?? state.defaultFormat;
+}
+
+// Кто где играет: игрок → номер корта
+export function playerCourts(state: EventState): Map<string, number> {
+	const courts = new Map<string, number>();
+	for (const match of Object.values(state.matches)) {
+		if (match.status !== 'on_court' || match.court === null) continue;
+		for (const id of matchPlayerIds(state, match)) courts.set(id, match.court);
+	}
+	return courts;
+}
+
+export type SideState =
+	{ kind: 'busy'; playerId: string; court: number } | { kind: 'rest'; since: string | null }; // since — конец последнего матча; null — не играл
+
+// Сторона матча в очереди: кто-то из игроков на корте или сколько отдыхает
+// (у пары — по последнему сыгравшему из двух)
+export function sideState(
+	state: EventState,
+	entryId: string,
+	courts: ReadonlyMap<string, number>
+): SideState {
+	const players = state.entries[entryId]?.players ?? [];
+	for (const { playerId } of players) {
+		const court = courts.get(playerId);
+		if (court !== undefined) return { kind: 'busy', playerId, court };
+	}
+	let since: string | null = null;
+	for (const { playerId } of players) {
+		const last = lastFinishedAt(state, playerId);
+		if (last && (!since || last > since)) since = last;
+	}
+	return { kind: 'rest', since };
+}
+
+// Счёт по партиям глазами стороны side: «21:15, 18:21»
+export function gamesText(games: readonly GameScore[], side: Side = 'A'): string {
+	return games.map(([a, b]) => (side === 'A' ? `${a}:${b}` : `${b}:${a}`)).join(', ');
+}
+
+// Результат в списке матчей (глазами стороны A): «21:15, 18:21, 21:19», «н/я Петров»,
+// «21:15, 11:8 · отказ Петров»
+export function resultText(state: EventState, lookup: NameLookup, match: Match): string {
+	const result = match.result;
+	if (!result) return '';
+	const loser = entrySurnames(state, lookup, result.winner === 'A' ? match.sideB : match.sideA);
+	const games = gamesText(result.games);
+	if (result.kind === 'walkover') return `н/я ${loser}${result.byWithdrawal ? ' (снят)' : ''}`;
+	if (result.kind === 'retired') return `${games ? `${games} · ` : ''}отказ ${loser}`;
+	return games;
+}
+
+// Ячейка шахматки глазами строки: счёт партии (матч из одной партии) или счёт по партиям.
+// При отказе недоигранная партия в счёт по партиям не входит.
+export function cellText(result: MatchResult, rowSide: Side, format: MatchFormat): string {
+	if (result.kind === 'walkover') return 'н/я';
+	const games = rowSide === 'A' ? result.games : result.games.map(([a, b]): GameScore => [b, a]);
+	if (format.bestOf === 1 && games.length === 1) {
+		return result.kind === 'retired' ? `${gamesText(games)} отк.` : gamesText(games);
+	}
+	const counted =
+		result.kind === 'retired'
+			? games.filter((g, i) => classifyGame(g, gamePointsAt(format, i)).kind === 'complete')
+			: games;
+	const won = counted.filter(([own, rival]) => own > rival).length;
+	const score = counted.length > 0 ? `${won}:${counted.length - won}` : '';
+	return result.kind === 'retired' ? `${score} отк.`.trim() : score;
+}
+
+export function groupStandings(state: EventState, group: Group): Standings {
+	const format = state.stages[group.stageId]?.format ?? state.defaultFormat;
+	return computeStandings({
+		entryIds: group.entryIds,
+		withdrawn: new Set(group.entryIds.filter((id) => state.entries[id]?.status === 'withdrawn')),
+		matches: groupMatches(state, group.id).map((m) => ({
+			sideA: m.sideA,
+			sideB: m.sideB,
+			result: m.status === 'finished' ? m.result : null
+		})),
+		format,
+		lots: group.lots
+	});
+}
+
+// Жребии, которые сейчас решают равенство: без жребия этот набор остался бы равным
+export function activeLots(state: EventState, group: Group): string[][] {
+	return group.lots.filter((lot) =>
+		groupStandings(state, { ...group, lots: group.lots.filter((l) => l !== lot) }).unresolved.some(
+			(block) => block.length === lot.length && block.every((id) => lot.includes(id))
+		)
+	);
 }

@@ -31,6 +31,23 @@ export function suggestMatch(state: EventState): Match | undefined {
 	return undefined;
 }
 
+// Подсказки сразу для всех свободных включённых кортов: по порядку номеров каждому —
+// первый матч очереди, где никто не на корте и не в подсказке для корта раньше
+export function suggestForCourts(state: EventState): Map<number, Match> {
+	const taken = busyPlayerIds(state);
+	const suggestions = new Map<number, Match>();
+	for (const court of state.courts) {
+		if (!court.enabled || matchOnCourt(state, court.number)) continue;
+		const match = state.queue
+			.map((id) => state.matches[id])
+			.find((m) => m && !matchPlayerIds(state, m).some((p) => taken.has(p)));
+		if (!match) break; // остальным кортам подходящего матча тоже нет
+		suggestions.set(court.number, match);
+		matchPlayerIds(state, match).forEach((p) => taken.add(p));
+	}
+	return suggestions;
+}
+
 // Когда игрок закончил последний матч — для показа времени отдыха
 export function lastFinishedAt(state: EventState, playerId: string): string | null {
 	let last: string | null = null;

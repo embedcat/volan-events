@@ -43,6 +43,7 @@ export {
 	lastFinishedAt,
 	matchOnCourt,
 	matchPlayerIds,
+	suggestForCourts,
 	suggestMatch
 } from './queue';
 export { deepEqual } from './util';

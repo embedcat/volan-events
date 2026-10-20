@@ -16,6 +16,13 @@ export function entryName(state: EventState, lookup: NameLookup, entryId: string
 	return entry.players.map((p) => playerName(lookup, p.playerId)).join(' / ');
 }
 
+// Коротко, только фамилии: «Петров», «Иванов / Сидоров»
+export function entrySurnames(state: EventState, lookup: NameLookup, entryId: string): string {
+	const entry = state.entries[entryId];
+	if (!entry) return '—';
+	return entry.players.map((p) => lookup(p.playerId)?.lastName ?? 'Игрок').join(' / ');
+}
+
 // Поиск без учёта регистра и разницы «е/ё»
 export function normalize(text: string): string {
 	return text.toLocaleLowerCase('ru').replaceAll('ё', 'е').trim();

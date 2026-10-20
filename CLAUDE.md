@@ -38,6 +38,12 @@
     правилами и плашкой «Отменить». Справочник — `registry` (`#lib/registry.svelte.js`).
   - В компонентах не называть переменную `state`: она затеняет руну `$state`
     (принято имя `ev` для состояния события).
+  - Меню «⋯» — `#lib/ui/Menu.svelte` (popover), пункты — кнопки с классом `menu-item`.
+    Окна — `<dialog>` с `showModal()`, как `#lib/ui/ResultDialog.svelte`.
+  - Текущее время для «14 мин» — `clock.now` (`#lib/clock.svelte.js`), не `Date.now()`:
+    так экран обновляется сам.
+  - Логика без интерфейса (`event-view.ts`, `score-entry.ts` и т. п.) — отдельными
+    модулями с тестами рядом.
   - Стили: токены и общие классы в `src/app.css`, без UI-библиотек.
   - Настройки Vitest — в `vitest.config.ts`, отдельно от `vite.config.ts`.
 - Пакеты отдают исходники TS (`exports` → `src/index.ts`), отдельной сборки у них нет.

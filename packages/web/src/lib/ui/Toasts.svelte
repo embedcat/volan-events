@@ -34,6 +34,12 @@
 		z-index: 50;
 		width: min(560px, calc(100vw - 32px));
 	}
+	/* Телефон: над панелью разделов события */
+	@media (max-width: 640px) {
+		.toasts {
+			bottom: calc(64px + env(safe-area-inset-bottom));
+		}
+	}
 	.toast {
 		display: flex;
 		align-items: center;

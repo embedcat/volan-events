@@ -56,10 +56,12 @@
 		background: var(--surface);
 		border-bottom: 1px solid var(--border);
 	}
+	/* Не помещается в строку (телефон) — правая часть уходит на вторую */
 	.bar {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		gap: 16px;
+		gap: 4px 16px;
 		padding-top: 8px;
 		padding-bottom: 8px;
 	}
@@ -76,6 +78,7 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
+		margin-left: auto;
 	}
 	@media (max-width: 600px) {
 		.user {
