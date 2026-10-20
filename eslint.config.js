@@ -19,7 +19,12 @@ export default defineConfig(
 		languageOptions: { globals: { ...globals.browser, ...globals.node } },
 		rules: {
 			// Необъявленные имена ловит TypeScript; правило ESLint на TS-проектах даёт ложные срабатывания
-			'no-undef': 'off'
+			'no-undef': 'off',
+			// _имя — намеренно не используется; остаток деструктуризации — способ отбросить поля
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true }
+			]
 		}
 	},
 	{

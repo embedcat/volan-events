@@ -9,9 +9,11 @@ catalog:
   # 6.0.x: typescript-eslint, svelte-check и SvelteKit пока не поддерживают TypeScript 7
   typescript: ~6.0.3
   vitest: ^5.0.5
+  zod: ^4.6.7
 
 # Пакеты, которым разрешено выполнять скрипты при установке
 allowBuilds:
+  better-sqlite3: true
   esbuild: true
 
 engineStrict: true

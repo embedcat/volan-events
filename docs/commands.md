@@ -50,20 +50,29 @@ type Command = {
 
 | Запрос | Назначение |
 |---|---|
-| `POST /api/commands` | пачка команд по порядку; ответ по каждой: применена (`seq`) / уже применена / отклонена (причина) |
-| `GET /api/events` | события организатора; для гостей — опубликованные |
-| `GET /api/events/:id` | полный `EventState` + `version` (владелец, суперюзер) |
-| `GET /api/events/:id/commands?after=N` | команды после версии N |
-| `GET /api/events/:id/stream` | SSE: владельцу — команды, гостю — «изменилось» |
-| `GET /api/public/events/:id` | публичное представление события (без закрытых полей) |
-| `GET /api/players?updatedAfter=…` | синхронизация справочника |
-| `GET /api/rejected`, `POST /api/rejected/:id/resolve` | отклонённые команды |
-| `POST /api/auth/login`, `POST /api/auth/logout` | вход и выход |
-| `GET /api/auth/sessions`, `DELETE /api/auth/sessions/:id` | свои устройства, отзыв |
-| `POST /api/users`, `PATCH /api/users/:id` | суперюзер: организаторы, блокировка, сброс пароля |
+| `POST /api/commands` | `{ commands: [...] }`, до 200 команд события и справочника по порядку. Ответ по каждой: `applied` (`seq` / `revision`), `duplicate`, `invalid`, `forbidden`, `rejected` (`error`). Отклонённая не останавливает следующие |
+| `GET /api/events` | опубликованные события — всем |
+| `GET /api/events?owner=me` | свои события (суперюзеру — все) |
+| `GET /api/events/:id` | `{ state, version, players }` — владельцу и суперюзеру |
+| `GET /api/events/:id/commands?after=N` | команды после версии N — для догона |
+| `GET /api/events/:id/stream` | SSE: владельцу — `command` с `id: seq` и догон по `Last-Event-ID`; гостю — `changed`; раз в 25 с — пинг |
+| `GET /api/public/events/:id` | `{ state без ownerId, version, players }`; черновик — только владельцу |
+| `GET /api/players?since=N` | изменения справочника после ревизии N: записи (закрытые поля — автору и суперюзеру) и метки удаления `{ id, deleted: true }` |
+| `GET /api/rejected`, `POST /api/rejected/:id/resolve` | свои неразобранные отклонённые команды; разбор: `discarded` / `reapplied` |
+| `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` | вход (`login`, `password`, `deviceId`), выход, текущий пользователь |
+| `GET /api/auth/sessions`, `DELETE /api/auth/sessions/:id` | свои устройства, выход на любом |
+| `POST /api/auth/password` | смена своего пароля; остальные устройства выходят |
+| `GET/POST /api/users`, `PATCH /api/users/:id`, `POST /api/users/:id/revoke-sessions` | суперюзер: организаторы, блокировка, сброс пароля, отзыв сессий |
 | `DELETE /api/events/:id` | удаление события |
 
-Консоль сервера: `user:create-superuser`.
+`players` в ответах о событии — имена игроков события `{ id: { lastName, firstName } }`;
+объединённая запись показывается по основной.
+
+Ошибки запросов: `{ error: { code, ... } }`. Изменяющие запросы принимаются только
+с `Content-Type: application/json`.
+
+Консоль сервера: `cli user:create-superuser <логин> [--name <имя>]`, пароль — из
+`VOLAN_PASSWORD` или вводом в терминале.
 
 ## Каталог команд MVP
 

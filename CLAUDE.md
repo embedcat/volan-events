@@ -18,8 +18,12 @@
 - `packages/domain` — правила турнира. Чистый TypeScript без типов окружения
   (`"types": []`): ни браузера, ни Node. Без побочных эффектов и случайности — ID, зерно
   жеребьёвки и время приходят в команде. Тесты рядом с кодом (`*.test.ts`), пишутся до кода.
-- `packages/server` — Fastify, SQLite через Drizzle. Разработка — `tsx watch`, сборка —
-  esbuild в `dist/main.js`: пакеты `@volan/*` встраиваются, остальные зависимости внешние.
+- `packages/server` — Fastify, SQLite через Drizzle (better-sqlite3). Разработка — `tsx watch`,
+  сборка — esbuild в `dist/main.js` и `dist/cli.js`: пакеты `@volan/*` встраиваются,
+  остальные зависимости внешние. Схема базы — `src/db/schema.ts`; после её изменения
+  сгенерировать миграцию (`db:generate`), файлы в `drizzle/` коммитятся и применяются при
+  старте. База по умолчанию — `packages/server/data/volan.sqlite` (`DATABASE_PATH`).
+  Тесты — с базой в памяти через `src/test-app.ts`.
 - `packages/web` — SvelteKit 3 в режиме SPA (adapter-static, `ssr = false`), алиас `#lib`.
   В разработке `/api` проксируется на `127.0.0.1:3000`.
 - Пакеты отдают исходники TS (`exports` → `src/index.ts`), отдельной сборки у них нет.
@@ -35,6 +39,9 @@
 | `pnpm typecheck` | tsc в domain и server, svelte-check в web         |
 | `pnpm test`      | Vitest во всех пакетах                            |
 | `pnpm build`     | сборка сервера и интерфейса                       |
+
+Сервер: `pnpm --filter @volan/server db:generate -- --name <имя>` — миграция из схемы;
+`pnpm --filter @volan/server cli user:create-superuser <логин>` — суперюзер.
 
 ## Версии и инструменты
 

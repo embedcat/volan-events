@@ -4,3 +4,6 @@ pnpm-lock.yaml
 docs/
 
 packages/web/static/
+
+# Миграции генерирует drizzle-kit
+packages/server/drizzle/

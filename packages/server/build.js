@@ -13,8 +13,8 @@ const externalizeDependencies = {
 };
 
 await build({
-	entryPoints: ['src/main.ts'],
-	outfile: 'dist/main.js',
+	entryPoints: ['src/main.ts', 'src/cli.ts'],
+	outdir: 'dist',
 	bundle: true,
 	platform: 'node',
 	format: 'esm',

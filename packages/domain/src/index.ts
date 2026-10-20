@@ -47,3 +47,24 @@ export {
 } from './queue';
 export { deepEqual } from './util';
 export { invertCommand } from './invert';
+export {
+	type Actor,
+	type Player,
+	type PlayerApplyResult,
+	type PlayerCommand,
+	type PlayerCommandDraft,
+	type PlayerCommandType,
+	type PlayerError,
+	type PlayerFields,
+	type PublicPlayer,
+	PRIVATE_PLAYER_FIELDS,
+	applyPlayerCommand,
+	canEditPlayer,
+	canSeePrivate,
+	invertPlayerCommand,
+	parsePlayerCommand,
+	playerCommandSchema,
+	playerFieldsSchema,
+	playerSchema,
+	publicPlayer
+} from './player';
