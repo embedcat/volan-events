@@ -43,7 +43,7 @@
 		);
 		waiting = false;
 		if (outcome.status === 'applied' || outcome.status === 'duplicate') {
-			await goto(resolve('/my'));
+			await goto(resolve('/e/[id]/settings', { id }));
 		} else if (outcome.status === 'rejected') {
 			error = domainErrorText(outcome.error);
 		} else {

@@ -4,6 +4,8 @@
 	import { resolve } from '$app/paths';
 	import { session } from '#lib/session.svelte.js';
 	import { theme } from '#lib/theme.svelte.js';
+	import SyncIndicator from '#lib/ui/SyncIndicator.svelte';
+	import Toasts from '#lib/ui/Toasts.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
@@ -33,6 +35,7 @@
 				{THEME_LABEL[theme.mode]}
 			</button>
 			{#if session.user}
+				<SyncIndicator />
 				<span class="muted user">{session.user.displayName}</span>
 				<button class="btn small" onclick={logout}>Выйти</button>
 			{:else}
@@ -45,6 +48,8 @@
 <main class="container">
 	{@render children()}
 </main>
+
+<Toasts />
 
 <style>
 	.top {

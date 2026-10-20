@@ -254,3 +254,26 @@ input[type='radio'] {
 	margin: 0 auto;
 	padding: 16px;
 }
+
+.grow {
+	flex: 1;
+	min-width: 140px;
+}
+
+/* Свойства «название — значение» */
+.props {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 4px 16px;
+	margin: 0 0 12px;
+}
+.props dt {
+	color: var(--text-2);
+}
+.props dd {
+	margin: 0;
+}
+
+.warn-text {
+	color: var(--warn);
+}

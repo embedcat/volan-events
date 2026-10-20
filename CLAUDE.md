@@ -33,7 +33,13 @@
     проверяется типами.
   - Все команды идут через `outbox` (`#lib/outbox.svelte.js`), конверт собирает
     `#lib/commands.js`. Тексты ошибок domain и сервера — `#lib/messages.js`.
+  - Событие на странице — `EventStore` (`openEvent(id)`, `#lib/event-store.svelte.js`):
+    `store.view` — что показывать, `store.run(draft, 'текст')` — команда с проверкой
+    правилами и плашкой «Отменить». Справочник — `registry` (`#lib/registry.svelte.js`).
+  - В компонентах не называть переменную `state`: она затеняет руну `$state`
+    (принято имя `ev` для состояния события).
   - Стили: токены и общие классы в `src/app.css`, без UI-библиотек.
+  - Настройки Vitest — в `vitest.config.ts`, отдельно от `vite.config.ts`.
 - Пакеты отдают исходники TS (`exports` → `src/index.ts`), отдельной сборки у них нет.
 
 ## Команды
@@ -53,7 +59,9 @@
 `pnpm --filter @volan/server cli dev:seed` — учётные записи `admin` и `org` для разработки
 (пароль — в `packages/server/src/cli.ts` или `VOLAN_DEV_PASSWORD`).
 
-Просмотр в браузерной панели Claude — конфигурация `volan-dev` в `.claude/launch.json`.
+Просмотр в браузерной панели Claude — `.claude/launch.json`: `volan-dev` запускает
+`pnpm dev` сам; если Vite под ним не стартует (так бывает на Windows), запустить `pnpm dev`
+отдельно и подключиться через `volan-attach`.
 
 ## Версии и инструменты
 
