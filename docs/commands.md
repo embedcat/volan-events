@@ -174,5 +174,54 @@ type Command = {
 
 **`player.update`** `{ playerId, changes, expected }` — автор или суперюзер.
 
+**`player.delete`** `{ playerId }` — автор или суперюзер; только если игрок нигде не заявлен.
+
 **`player.merge`** `{ sourceId, targetId }`
 — Суперюзер или автор обеих записей. `sourceId` получает `merged_into_id = targetId`.
+
+**`player.unmerge`** `{ sourceId }` — отмена объединения.
+
+## Отмена
+
+Подтверждений в интерфейсе нет (кроме удаления события): после действия на несколько
+секунд показывается «[Отменить]». Отмена — это новая обратная команда, а не откат журнала.
+`domain` для каждой команды умеет построить обратную по состоянию до неё:
+`invert(stateBefore, command) → Command[]`.
+
+| Команда | Обратная |
+|---|---|
+| `match.call` | `match.uncall` |
+| `match.uncall` | `match.call` на тот же корт (если свободен) |
+| `match.moveCourt` | `match.moveCourt` на прежний корт |
+| `match.recordResult` — первый ввод | `match.clearResult` |
+| `match.recordResult` — правка | `match.recordResult` с прежним результатом |
+| `match.clearResult` | `match.recordResult` с прежним результатом |
+| `queue.move` | `queue.move` на прежнее место |
+| `court.setEnabled` | `court.setEnabled` с прежним значением |
+| `event.start` | `event.backToSetup` |
+| `event.finish` | `event.reopen` |
+| `event.reopen` | `event.finish` |
+| `event.update`, `event.setVisibility`, `event.setCourts` | та же команда с прежними значениями |
+| `category.create` | `category.delete` |
+| `category.delete` | `category.restore` с сохранённой категорией и участниками |
+| `category.update` | `category.update` с прежними значениями |
+| `entry.add` | `entry.remove` |
+| `entry.remove` | `entry.add` с тем же ID и составом |
+| `entry.update` | `entry.update` с прежним составом |
+| `entry.withdraw` | `entry.reinstate` |
+| `entry.reinstate` | `entry.withdraw` |
+| `group.generateSchedule` | `group.clearSchedule` или пересборка прежнего порядка |
+| `group.resolveTie` | `group.resolveTie` с прежней расстановкой (или пустой) |
+| `player.create` | `player.delete` |
+| `player.update` | `player.update` с прежними значениями |
+| `player.merge` | `player.unmerge` |
+
+Дополнительные команды, нужные только для отмены:
+
+- **`event.backToSetup`** — `running → setup`; можно, пока ни один матч не вызван.
+- **`group.clearSchedule`** `{ groupId }` — убрать расписание; можно, пока ни один матч
+  группы не вызван.
+- **`category.restore`** `{ category, stages, groups, entries }` — вернуть удалённую категорию.
+
+Если обратная команда уже недопустима (корт заняли с другого устройства), отмена
+не выполняется и показывается причина.
