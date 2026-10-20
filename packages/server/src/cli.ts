@@ -9,8 +9,10 @@ import { users } from './db/schema';
 
 const USAGE = `Использование:
   cli user:create-superuser <логин> [--name <имя>]
+  cli dev:seed                      учётные записи admin и org для разработки
 
-Пароль берётся из переменной VOLAN_PASSWORD, иначе спрашивается в терминале.`;
+Пароль суперюзера берётся из VOLAN_PASSWORD, иначе спрашивается в терминале.
+Пароль dev:seed — из VOLAN_DEV_PASSWORD, иначе значение по умолчанию из cli.ts.`;
 
 // Пароль без эха в терминале
 function promptHidden(question: string): Promise<string> {
@@ -75,6 +77,41 @@ async function createSuperuser(login: string, displayName: string): Promise<void
 	}
 }
 
+// Пароль учётных записей для разработки, если не задан VOLAN_DEV_PASSWORD.
+// Только для локальной базы: в рабочем режиме команда отказывается работать.
+const DEV_PASSWORD = 'volan-dev-pass';
+
+async function devSeed(): Promise<void> {
+	if (process.env.NODE_ENV === 'production') throw new Error('dev:seed — только для разработки');
+	const password = process.env.VOLAN_DEV_PASSWORD ?? DEV_PASSWORD;
+	const config = loadConfig();
+	const { db, close } = openDatabase(
+		config.databasePath,
+		fileURLToPath(new URL('../drizzle', import.meta.url))
+	);
+	try {
+		const accounts = [
+			{ login: 'admin', displayName: 'Администратор', role: 'superuser' as const },
+			{ login: 'org', displayName: 'Организатор', role: 'organizer' as const }
+		];
+		for (const account of accounts) {
+			if (db.select().from(users).where(eq(users.login, account.login)).get()) continue;
+			db.insert(users)
+				.values({
+					...account,
+					id: randomUUID(),
+					passwordHash: await hashPassword(password, config.scrypt),
+					isActive: true,
+					createdAt: new Date()
+				})
+				.run();
+			console.log(`Создан ${account.login} (${account.role})`);
+		}
+	} finally {
+		close();
+	}
+}
+
 const { positionals, values } = parseArgs({
 	allowPositionals: true,
 	options: { name: { type: 'string' } }
@@ -84,6 +121,8 @@ const [command, login] = positionals;
 try {
 	if (command === 'user:create-superuser' && login) {
 		await createSuperuser(login, values.name ?? login);
+	} else if (command === 'dev:seed') {
+		await devSeed();
 	} else {
 		console.log(USAGE);
 		process.exitCode = 1;

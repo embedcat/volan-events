@@ -4,8 +4,9 @@ import { loadConfig } from './config';
 import { openDatabase } from './db';
 import { EventHub } from './hub';
 
-const port = Number(process.env.PORT ?? 3000);
-const host = process.env.HOST ?? '127.0.0.1';
+// Свои имена переменных: общий PORT выставляют разные инструменты (и он занят интерфейсом)
+const port = Number(process.env.API_PORT ?? 3000);
+const host = process.env.API_HOST ?? '127.0.0.1';
 
 const config = loadConfig();
 // Папка миграций — рядом с пакетом: и src/main.ts, и dist/main.js лежат на уровень ниже

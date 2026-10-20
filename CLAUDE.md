@@ -23,9 +23,17 @@
   остальные зависимости внешние. Схема базы — `src/db/schema.ts`; после её изменения
   сгенерировать миграцию (`db:generate`), файлы в `drizzle/` коммитятся и применяются при
   старте. База по умолчанию — `packages/server/data/volan.sqlite` (`DATABASE_PATH`).
+  Порт и адрес — `API_PORT` / `API_HOST` (не `PORT`: его выставляют разные инструменты).
   Тесты — с базой в памяти через `src/test-app.ts`.
-- `packages/web` — SvelteKit 3 в режиме SPA (adapter-static, `ssr = false`), алиас `#lib`.
+- `packages/web` — SvelteKit 3 в режиме SPA (adapter-static, `ssr = false`).
   В разработке `/api` проксируется на `127.0.0.1:3000`.
+  - Импорты из `src/lib` — через поле `imports` package.json и с расширением `.js`:
+    `#lib/api.js`, `#lib/session.svelte.js`, `#lib/ui/EventList.svelte`.
+  - Ссылки и `goto` — через `resolve('/e/[id]', { id })` из `$app/paths`: маршрут
+    проверяется типами.
+  - Все команды идут через `outbox` (`#lib/outbox.svelte.js`), конверт собирает
+    `#lib/commands.js`. Тексты ошибок domain и сервера — `#lib/messages.js`.
+  - Стили: токены и общие классы в `src/app.css`, без UI-библиотек.
 - Пакеты отдают исходники TS (`exports` → `src/index.ts`), отдельной сборки у них нет.
 
 ## Команды
@@ -41,7 +49,11 @@
 | `pnpm build`     | сборка сервера и интерфейса                       |
 
 Сервер: `pnpm --filter @volan/server db:generate -- --name <имя>` — миграция из схемы;
-`pnpm --filter @volan/server cli user:create-superuser <логин>` — суперюзер.
+`pnpm --filter @volan/server cli user:create-superuser <логин>` — суперюзер;
+`pnpm --filter @volan/server cli dev:seed` — учётные записи `admin` и `org` для разработки
+(пароль — в `packages/server/src/cli.ts` или `VOLAN_DEV_PASSWORD`).
+
+Просмотр в браузерной панели Claude — конфигурация `volan-dev` в `.claude/launch.json`.
 
 ## Версии и инструменты
 

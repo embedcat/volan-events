@@ -14,4 +14,12 @@ pnpm dev
 
 Интерфейс — http://localhost:5173, API — http://localhost:3000/api.
 
+Учётные записи для разработки (`admin` — суперюзер, `org` — организатор) в локальной базе:
+
+```sh
+pnpm --filter @volan/server cli dev:seed
+```
+
+Пароль по умолчанию — в `packages/server/src/cli.ts`, свой можно задать в `VOLAN_DEV_PASSWORD`.
+
 Проверки перед коммитом — `pnpm check`.

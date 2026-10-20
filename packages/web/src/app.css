@@ -1,0 +1,256 @@
+/* Токены: светлая тема по умолчанию, тёмная — по системе или вручную (data-theme) */
+:root {
+	--bg: #f5f6f8;
+	--surface: #ffffff;
+	--surface-2: #eef0f3;
+	--border: #d6dae0;
+	--border-strong: #b9bfc8;
+	--text: #14171c;
+	--text-2: #5a636f;
+	--accent: #1f63d6;
+	--accent-soft: #e3ecfb;
+	--accent-text: #ffffff;
+	--danger: #c0392b;
+	--danger-soft: #fbe9e7;
+	--ok: #2e7d32;
+	--ok-soft: #e6f3e7;
+	--warn: #a15c00;
+	--warn-soft: #fdf0dc;
+	--focus: color-mix(in srgb, var(--accent) 45%, transparent);
+
+	--radius: 6px;
+	--font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--bg: #0f1114;
+		--surface: #171a1f;
+		--surface-2: #1f232a;
+		--border: #2b3139;
+		--border-strong: #3c444f;
+		--text: #e5e8ec;
+		--text-2: #9aa3ae;
+		--accent: #5b95f5;
+		--accent-soft: #1b2a44;
+		--accent-text: #0b0d10;
+		--danger: #ef6f62;
+		--danger-soft: #3a1c19;
+		--ok: #67b96b;
+		--ok-soft: #18301a;
+		--warn: #e0a24a;
+		--warn-soft: #36280f;
+		color-scheme: dark;
+	}
+}
+
+:root[data-theme='dark'] {
+	--bg: #0f1114;
+	--surface: #171a1f;
+	--surface-2: #1f232a;
+	--border: #2b3139;
+	--border-strong: #3c444f;
+	--text: #e5e8ec;
+	--text-2: #9aa3ae;
+	--accent: #5b95f5;
+	--accent-soft: #1b2a44;
+	--accent-text: #0b0d10;
+	--danger: #ef6f62;
+	--danger-soft: #3a1c19;
+	--ok: #67b96b;
+	--ok-soft: #18301a;
+	--warn: #e0a24a;
+	--warn-soft: #36280f;
+	color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--font);
+	font-size: 15px;
+	line-height: 1.4;
+	font-variant-numeric: tabular-nums;
+	-webkit-text-size-adjust: 100%;
+}
+
+a {
+	color: var(--accent);
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+
+h1,
+h2,
+h3 {
+	margin: 0 0 12px;
+	line-height: 1.2;
+}
+h1 {
+	font-size: 22px;
+}
+h2 {
+	font-size: 17px;
+}
+h3 {
+	font-size: 15px;
+}
+
+:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 1px;
+}
+
+/* ——— Кнопки ——— */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	min-height: 36px;
+	padding: 6px 14px;
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+	white-space: nowrap;
+	text-decoration: none;
+}
+.btn:hover {
+	background: var(--surface-2);
+	text-decoration: none;
+}
+.btn:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+.btn.primary {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--accent-text);
+}
+.btn.primary:hover {
+	background: color-mix(in srgb, var(--accent) 88%, black);
+}
+.btn.danger {
+	color: var(--danger);
+	border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+}
+.btn.ghost {
+	border-color: transparent;
+	background: transparent;
+}
+.btn.small {
+	min-height: 28px;
+	padding: 2px 10px;
+	font-size: 13px;
+}
+
+/* ——— Формы ——— */
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 12px;
+}
+.field > span {
+	font-size: 13px;
+	color: var(--text-2);
+}
+input,
+select,
+textarea {
+	min-height: 36px;
+	padding: 6px 10px;
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--text);
+	font: inherit;
+}
+input[type='checkbox'],
+input[type='radio'] {
+	min-height: auto;
+}
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+/* ——— Поверхности ——— */
+.card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 16px;
+}
+.muted {
+	color: var(--text-2);
+}
+.error-text {
+	color: var(--danger);
+}
+.badge {
+	display: inline-block;
+	padding: 1px 8px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 500;
+	background: var(--surface-2);
+	color: var(--text-2);
+}
+.badge.running {
+	background: var(--ok-soft);
+	color: var(--ok);
+}
+.badge.draft {
+	background: var(--warn-soft);
+	color: var(--warn);
+}
+
+/* ——— Таблицы ——— */
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	background: var(--surface);
+}
+.table th,
+.table td {
+	padding: 6px 10px;
+	border-bottom: 1px solid var(--border);
+	text-align: left;
+	vertical-align: middle;
+}
+.table th {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-2);
+	background: var(--surface-2);
+}
+.num {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 16px;
+}

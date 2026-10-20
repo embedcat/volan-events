@@ -4,6 +4,14 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+		<meta name="color-scheme" content="light dark" />
+		<script>
+			// Тема, выбранная вручную, — до отрисовки, чтобы страница не мигала
+			try {
+				var mode = localStorage.getItem('volan.theme');
+				if (mode === 'light' || mode === 'dark') document.documentElement.dataset.theme = mode;
+			} catch (e) {}
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
