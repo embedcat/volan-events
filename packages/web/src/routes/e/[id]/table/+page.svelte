@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import type { Category } from '@volan/domain';
 	import { activeLots, categoryGroup, categoryTitle, groupStandings } from '#lib/event-view.js';
 	import { entrySurnames } from '#lib/names.js';
@@ -8,8 +9,9 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
-	const store = $derived(data.store);
-	const ev = $derived(store?.view ?? null);
+	const store = $derived(data.store); // владелец: правка результатов и жребий
+	const reader = $derived(data.store ?? data.guest);
+	const ev = $derived(reader?.view ?? null);
 
 	// MVP: одна категория, одна группа (D40)
 	const category = $derived(
@@ -20,11 +22,12 @@
 	const lots = $derived(ev && group ? activeLots(ev, group) : []);
 	// Жребий — когда сыграны все матчи (D94); до этого равенство — обычное дело
 	const ties = $derived(standings?.complete ? standings.unresolved : []);
-	const running = $derived(ev?.progress === 'running');
+	// Править может только владелец, пока турнир идёт
+	const running = $derived(!!store && ev?.progress === 'running');
 
 	const placeOf = (id: string) => standings?.rows.find((r) => r.entryId === id)?.place ?? 0;
 	const names = (ids: string[]) =>
-		ev && store ? ids.map((id) => entrySurnames(ev, store.name, id)).join(', ') : '';
+		ev && reader ? ids.map((id) => entrySurnames(ev, reader.name, id)).join(', ') : '';
 
 	let resultFor = $state<string | null>(null);
 	let tie = $state<string[] | null>(null);
@@ -34,7 +37,7 @@
 	<title>Таблица — {ev?.title ?? 'событие'}</title>
 </svelte:head>
 
-{#if store && ev}
+{#if reader && ev}
 	{#if !category || !group || !standings}
 		<p class="muted">Категория ещё не создана.</p>
 	{:else if group.entryIds.length === 0}
@@ -43,13 +46,16 @@
 		<div class="title">
 			<h2>Группа {group.name} · {categoryTitle(category)}</h2>
 			<span class="muted">
-				{standings.complete ? 'все матчи сыграны' : 'места предварительные'}
+				{standings.complete ? 'все матчи сыграны' : 'места предварительные'} ·
+				<a class="no-print" href={resolve('/e/[id]/print', { id: reader.id })}
+					>протокол для печати</a
+				>
 			</span>
 		</div>
 
 		<GroupTable
 			{ev}
-			lookup={store.name}
+			lookup={reader.name}
 			{group}
 			{standings}
 			lotIds={new Set(lots.flat())}
@@ -60,7 +66,11 @@
 			<div class="ties">
 				{#each ties as block (block.join())}
 					<div class="tie warn">
-						<span>Равны по всем показателям: {names(block)}</span>
+						<span>
+							Равны по всем показателям: {names(block)}{store
+								? ''
+								: ' — места определит жребий организатора'}
+						</span>
 						{#if running}
 							<button class="btn small" onclick={() => (tie = block)}>Жребий</button>
 						{/if}
@@ -74,7 +84,7 @@
 							<button
 								class="btn small ghost"
 								onclick={() =>
-									store.run(
+									store?.run(
 										{ type: 'group.clearTie', payload: { groupId: group.id, entryIds: lot } },
 										'Жребий снят'
 									)}
@@ -88,10 +98,10 @@
 		{/if}
 	{/if}
 
-	{#if resultFor}
+	{#if store && resultFor}
 		<ResultDialog {store} matchId={resultFor} onclose={() => (resultFor = null)} />
 	{/if}
-	{#if tie && group}
+	{#if store && tie && group}
 		<TieDialog
 			{store}
 			groupId={group.id}

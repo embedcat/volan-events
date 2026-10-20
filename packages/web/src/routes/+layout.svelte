@@ -2,8 +2,10 @@
 	import '../app.css';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { conflicts } from '#lib/conflicts.svelte.js';
 	import { session } from '#lib/session.svelte.js';
 	import { theme } from '#lib/theme.svelte.js';
+	import Menu from '#lib/ui/Menu.svelte';
 	import SyncIndicator from '#lib/ui/SyncIndicator.svelte';
 	import Toasts from '#lib/ui/Toasts.svelte';
 	import type { LayoutProps } from './$types';
@@ -16,29 +18,44 @@
 		dark: 'Тема: тёмная'
 	};
 
+	// Отклонённые команды со всех устройств — при входе (индикатор «▲ конфликты»)
+	$effect(() => {
+		if (session.user) void conflicts.load();
+		else conflicts.clear();
+	});
+
 	async function logout() {
 		await session.logout();
 		await goto(resolve('/'));
 	}
 </script>
 
-<header class="top">
+<header class="top no-print">
 	<div class="container bar">
 		<a class="brand" href={resolve('/')}>volan-events</a>
 		<nav>
 			{#if session.user}
 				<a href={resolve('/my')}>Мои события</a>
+				<a href={resolve('/players')}>Игроки</a>
 			{/if}
 		</nav>
 		<div class="right">
-			<button class="btn ghost small" onclick={() => theme.next()} title="Сменить тему">
-				{THEME_LABEL[theme.mode]}
-			</button>
 			{#if session.user}
 				<SyncIndicator />
-				<span class="muted user">{session.user.displayName}</span>
-				<button class="btn small" onclick={logout}>Выйти</button>
+				<!-- Разделы пользователя — меню под именем (D140) -->
+				<Menu label="{session.user.displayName} ▾" title="Меню пользователя">
+					<a class="menu-item" href={resolve('/account')}>Аккаунт и устройства</a>
+					<a class="menu-item" href={resolve('/sync')}>Синхронизация</a>
+					{#if session.user.role === 'superuser'}
+						<a class="menu-item" href={resolve('/admin/users')}>Пользователи</a>
+					{/if}
+					<hr class="menu-sep" />
+					<button class="menu-item" onclick={logout}>Выйти</button>
+				</Menu>
 			{:else}
+				<button class="btn ghost small" onclick={() => theme.next()} title="Сменить тему">
+					{THEME_LABEL[theme.mode]}
+				</button>
 				<a class="btn small" href={resolve('/login')}>Войти</a>
 			{/if}
 		</div>
@@ -79,10 +96,5 @@
 		align-items: center;
 		gap: 8px;
 		margin-left: auto;
-	}
-	@media (max-width: 600px) {
-		.user {
-			display: none;
-		}
 	}
 </style>

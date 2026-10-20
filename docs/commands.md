@@ -63,6 +63,7 @@ type Command = {
 | `GET /api/auth/sessions`, `DELETE /api/auth/sessions/:id` | свои устройства, выход на любом |
 | `POST /api/auth/password` | смена своего пароля; остальные устройства выходят |
 | `GET/POST /api/users`, `PATCH /api/users/:id`, `POST /api/users/:id/revoke-sessions` | суперюзер: организаторы, блокировка, сброс пароля, отзыв сессий |
+| `GET /api/organizers` | `{ id, displayName }` всех пользователей — любому вошедшему: авторы в справочнике (D139) |
 | `DELETE /api/events/:id` | удаление события |
 
 `players` в ответах о событии — имена игроков события `{ id: { lastName, firstName } }`;

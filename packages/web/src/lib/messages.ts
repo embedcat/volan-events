@@ -138,6 +138,48 @@ export function scoreIssueText(issue: ScoreIssue): string {
 	}
 }
 
+// Что делала команда — для списка конфликтов
+const COMMAND_LABEL: Record<string, string> = {
+	'event.create': 'Создание события',
+	'event.update': 'Изменение события',
+	'event.setVisibility': 'Публикация события',
+	'event.setCourts': 'Число кортов',
+	'court.setEnabled': 'Включение или выключение корта',
+	'event.start': 'Начало турнира',
+	'event.backToSetup': 'Возврат в настройку',
+	'event.finish': 'Завершение турнира',
+	'event.reopen': 'Возврат турнира в работу',
+	'category.create': 'Создание категории',
+	'category.update': 'Изменение категории',
+	'category.delete': 'Удаление категории',
+	'category.restore': 'Возврат категории',
+	'entry.add': 'Добавление участника',
+	'entry.update': 'Замена игрока в паре',
+	'entry.remove': 'Удаление участника',
+	'entry.withdraw': 'Снятие участника',
+	'entry.reinstate': 'Возврат участника',
+	'group.generateSchedule': 'Составление расписания',
+	'group.clearSchedule': 'Удаление расписания',
+	'group.resolveTie': 'Жребий',
+	'group.clearTie': 'Снятие жребия',
+	'queue.move': 'Перестановка в очереди',
+	'match.call': 'Вызов на корт',
+	'match.uncall': 'Отмена вызова',
+	'match.moveCourt': 'Перенос на другой корт',
+	'match.recordResult': 'Результат',
+	'match.clearResult': 'Стирание результата',
+	'match.restore': 'Отмена действия с матчем',
+	'player.create': 'Новый игрок',
+	'player.update': 'Правка игрока',
+	'player.delete': 'Удаление игрока',
+	'player.merge': 'Объединение игроков',
+	'player.unmerge': 'Отмена объединения'
+};
+
+export function commandLabel(type: string): string {
+	return COMMAND_LABEL[type] ?? type;
+}
+
 const API_TEXTS: Record<string, string> = {
 	network: 'Нет связи с сервером',
 	'auth.invalid': 'Неверный логин или пароль',
@@ -148,7 +190,10 @@ const API_TEXTS: Record<string, string> = {
 	'event.notFound': 'Событие не найдено',
 	'event.forbidden': 'Нет прав на это событие',
 	'event.hasResults': 'В событии есть сыгранные матчи — удалить может только суперюзер',
-	'request.invalid': 'Неверные данные'
+	'request.invalid': 'Неверные данные',
+	'session.notFound': 'Устройство уже вышло',
+	'user.notFound': 'Пользователь не найден',
+	'rejected.notFound': 'Конфликт уже разобран'
 };
 
 export function apiErrorText(error: unknown): string {

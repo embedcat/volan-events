@@ -6,7 +6,7 @@ import { hashPassword } from '../auth/password';
 import { revokeUserSessions } from '../auth/sessions';
 import type { AppDeps } from '../app';
 import { sessions, users } from '../db/schema';
-import { HttpError, parseWith, requireSuperuser } from '../http';
+import { HttpError, parseWith, requireSuperuser, requireUser } from '../http';
 
 const createBody = z.object({
 	login: z.string().trim().min(1).max(100),
@@ -91,6 +91,14 @@ export function userRoutes(app: FastifyInstance, deps: AppDeps): void {
 		// Блокировка и сброс пароля выводят пользователя со всех устройств
 		if (body.isActive === false || body.password !== undefined) revokeUserSessions(db, user.id);
 		return { ok: true };
+	});
+
+	// Имена авторов записей справочника — любому вошедшему (D139)
+	app.get('/api/organizers', async (request) => {
+		requireUser(request);
+		return {
+			organizers: db.select({ id: users.id, displayName: users.displayName }).from(users).all()
+		};
 	});
 
 	app.post<{ Params: { id: string } }>('/api/users/:id/revoke-sessions', async (request) => {

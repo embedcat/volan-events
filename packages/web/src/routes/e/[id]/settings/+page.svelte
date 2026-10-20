@@ -16,7 +16,9 @@
 	<title>Настройки — {store?.view?.title ?? 'событие'}</title>
 </svelte:head>
 
-{#if store}
+{#if !store}
+	<p class="muted">Настройки доступны только владельцу события.</p>
+{:else}
 	<div class="sections">
 		<Readiness {store} />
 		<EventSection {store} />

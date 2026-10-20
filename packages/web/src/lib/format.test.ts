@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { MATCHES, formatLabel, formatMinutes, formatTime, minutesSince, plural } from './format.js';
+import {
+	MATCHES,
+	formatDateTime,
+	formatLabel,
+	formatMinutes,
+	formatTime,
+	minutesSince,
+	plural
+} from './format.js';
 
 describe('plural', () => {
 	it.each([
@@ -39,5 +47,6 @@ describe('время', () => {
 		expect(formatMinutes(14)).toBe('14 мин');
 		expect(formatMinutes(65)).toBe('1 ч 05 мин');
 		expect(formatTime(new Date(2026, 9, 26, 9, 5).toISOString())).toBe('09:05');
+		expect(formatDateTime(new Date(2026, 9, 6, 14, 32).toISOString())).toBe('06.10.2026 14:32');
 	});
 });

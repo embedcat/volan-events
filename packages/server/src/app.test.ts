@@ -166,4 +166,23 @@ describe('пользователи', () => {
 		).toBe(401);
 		await expect(ctx.login('anna')).rejects.toThrow();
 	});
+
+	it('имена организаторов — любому вошедшему, без входа — 401', async () => {
+		ctx = await createTestApp();
+		const admin = await ctx.userWithSession('root', 'superuser');
+		const anna = await ctx.userWithSession('anna');
+		const response = await ctx.app.inject({
+			method: 'GET',
+			url: '/api/organizers',
+			headers: { cookie: anna.cookie }
+		});
+		expect(response.statusCode).toBe(200);
+		expect(response.json().organizers).toEqual(
+			expect.arrayContaining([
+				{ id: admin.id, displayName: 'root' },
+				{ id: anna.id, displayName: 'anna' }
+			])
+		);
+		expect((await ctx.app.inject({ method: 'GET', url: '/api/organizers' })).statusCode).toBe(401);
+	});
 });

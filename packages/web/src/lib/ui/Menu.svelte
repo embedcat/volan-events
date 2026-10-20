@@ -36,9 +36,9 @@
 		});
 	}
 
-	// Выбор пункта закрывает меню
+	// Выбор пункта (кнопки или ссылки) закрывает меню
 	function onclick(event: MouseEvent) {
-		if ((event.target as HTMLElement).closest('button')) menu?.hidePopover();
+		if ((event.target as HTMLElement).closest('button, a')) menu?.hidePopover();
 	}
 </script>
 
@@ -78,6 +78,8 @@
 	}
 	.menu :global(.menu-item) {
 		display: block;
+		box-sizing: border-box;
+		text-decoration: none;
 		width: 100%;
 		padding: 8px 10px;
 		border: none;

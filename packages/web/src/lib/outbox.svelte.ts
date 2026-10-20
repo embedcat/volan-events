@@ -1,5 +1,6 @@
 import type { DomainError, EventCommand, PlayerCommand, PlayerError } from '@volan/domain';
 import { ApiError, api } from './api.js';
+import { nowIso } from './format.js';
 
 export type AnyCommand = EventCommand | PlayerCommand;
 
@@ -26,6 +27,7 @@ const RETRY_MAX = 30_000;
 export class Outbox {
 	pending = $state.raw<AnyCommand[]>([]);
 	status = $state<OutboxStatus>('idle');
+	lastSyncAt = $state<string | null>(null); // ISO: последний ответ сервера на пачку
 
 	// Служебные структуры, на экран не выводятся — реактивность им не нужна
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
@@ -71,6 +73,7 @@ export class Outbox {
 		}
 
 		this.retryDelay = RETRY_MIN;
+		this.lastSyncAt = nowIso();
 		this.pending = this.pending.filter((c) => !batch.includes(c));
 		batch.forEach((command, i) => {
 			const outcome = outcomes[i] ?? { status: 'invalid', issues: [] };

@@ -2,46 +2,61 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { closeEvent } from '#lib/event-store.svelte.js';
-	import { PROGRESS_LABEL, VISIBILITY_LABEL, formatDate } from '#lib/format.js';
+	import { PROGRESS_LABEL, VISIBILITY_LABEL, formatDate, formatTime } from '#lib/format.js';
+	import { closePublicEvent } from '#lib/public-event.svelte.js';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
 	const store = $derived(data.store);
-	const ev = $derived(store?.view ?? null);
+	const guest = $derived(data.guest);
+	const ev = $derived((store ?? guest)?.view ?? null);
+	const loadState = $derived((store ?? guest)?.loadState ?? 'loading');
 
 	// Поток изменений — пока открыта любая вкладка события
 	$effect(() => {
-		if (!store || store.loadState !== 'ready') return;
-		store.connect();
-		const id = store.id;
-		return () => closeEvent(id);
+		if (store?.loadState === 'ready') {
+			store.connect();
+			const id = store.id;
+			return () => closeEvent(id);
+		}
+		if (guest?.loadState === 'ready') {
+			guest.connect();
+			const id = guest.id;
+			return () => closePublicEvent(id);
+		}
 	});
 
 	const id = $derived(page.params.id ?? '');
+	// Гость видит те же разделы без настроек; «Корты» у него — без кнопок (docs/screens.md)
 	const tabs = $derived([
-		{ href: resolve('/e/[id]/courts', { id }), label: 'Пульт' },
+		{ href: resolve('/e/[id]/courts', { id }), label: store ? 'Пульт' : 'Корты' },
 		{ href: resolve('/e/[id]/table', { id }), label: 'Таблица' },
 		{ href: resolve('/e/[id]/matches', { id }), label: 'Матчи' },
 		{ href: resolve('/e/[id]/entries', { id }), label: 'Участники' },
-		{ href: resolve('/e/[id]/settings', { id }), label: 'Настройки' }
+		...(store ? [{ href: resolve('/e/[id]/settings', { id }), label: 'Настройки' }] : [])
 	]);
 </script>
 
-{#if !store}
-	<p class="muted">Просмотр события для гостей появится в порции 7d.</p>
-{:else if store.loadState === 'notFound'}
-	<p class="error-text">Событие не найдено.</p>
-{:else if store.loadState === 'forbidden'}
+{#if loadState === 'notFound'}
+	<p class="error-text">
+		Событие не найдено{store ? '' : ' или ещё не опубликовано'}.
+	</p>
+{:else if loadState === 'forbidden'}
 	<p class="error-text">Это событие другого организатора.</p>
-{:else if store.loadState === 'offline' || !ev}
+{:else if loadState === 'offline' || !ev}
 	<p class="error-text">Нет связи с сервером — событие не загружено.</p>
 {:else}
-	<header class="event">
+	<header class="event no-print">
 		<div>
 			<h1>{ev.title}</h1>
 			<span class="muted">{formatDate(ev.date)}{ev.venue ? ` · ${ev.venue}` : ''}</span>
 		</div>
 		<div class="badges">
+			{#if guest?.updatedAt}
+				<span class="muted updated" title={guest.live ? 'Обновляется само' : 'Нет связи'}>
+					{guest.live ? '●' : '○'} обновлено в {formatTime(guest.updatedAt)}
+				</span>
+			{/if}
 			{#if ev.visibility === 'draft'}
 				<span class="badge draft">{VISIBILITY_LABEL.draft}</span>
 			{/if}
@@ -51,7 +66,7 @@
 		</div>
 	</header>
 
-	<nav class="tabs">
+	<nav class="tabs no-print">
 		{#each tabs as tab (tab.href)}
 			<a href={tab.href} class:active={page.url.pathname === tab.href}>{tab.label}</a>
 		{/each}
@@ -76,7 +91,11 @@
 	}
 	.badges {
 		display: flex;
+		align-items: center;
 		gap: 6px;
+	}
+	.updated {
+		font-size: 13px;
 	}
 	.tabs {
 		display: flex;

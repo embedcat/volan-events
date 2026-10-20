@@ -4,13 +4,15 @@
 	import { playerCourts } from '#lib/event-view.js';
 	import { MATCHES, plural } from '#lib/format.js';
 	import ResultDialog from '#lib/ui/ResultDialog.svelte';
+	import CourtBoard from '#lib/ui/courts/CourtBoard.svelte';
 	import CourtCard from '#lib/ui/courts/CourtCard.svelte';
 	import QueueList from '#lib/ui/courts/QueueList.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	const store = $derived(data.store);
-	const ev = $derived(store?.view ?? null);
+	const guest = $derived(data.guest);
+	const ev = $derived((store ?? guest)?.view ?? null);
 
 	const busyPlayers = $derived(ev ? playerCourts(ev) : new Map<string, number>());
 	const suggestions = $derived(ev ? suggestForCourts(ev) : new Map<number, Match>());
@@ -34,10 +36,20 @@
 </script>
 
 <svelte:head>
-	<title>Пульт — {ev?.title ?? 'событие'}</title>
+	<title>{store ? 'Пульт' : 'Корты'} — {ev?.title ?? 'событие'}</title>
 </svelte:head>
 
-{#if store && ev}
+{#if guest && ev}
+	{#if ev.progress === 'setup'}
+		<p class="muted">Турнир ещё не начат.</p>
+	{:else if ev.progress === 'finished'}
+		<p class="muted">
+			Турнир завершён. Итоги — в <a href={resolve('/e/[id]/table', { id: guest.id })}>таблице</a>.
+		</p>
+	{:else}
+		<CourtBoard {ev} lookup={guest.name} />
+	{/if}
+{:else if store && ev}
 	{#if ev.progress === 'setup'}
 		<p class="muted">
 			Турнир ещё не начат. Подготовка и старт — в

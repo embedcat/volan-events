@@ -9,9 +9,10 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
-	const store = $derived(data.store);
-	const ev = $derived(store?.view ?? null);
-	const running = $derived(ev?.progress === 'running');
+	const store = $derived(data.store); // владелец: ввод и правка результатов
+	const reader = $derived(data.store ?? data.guest);
+	const ev = $derived(reader?.view ?? null);
+	const running = $derived(!!store && ev?.progress === 'running');
 
 	type Filter = 'all' | 'pending' | 'on_court' | 'finished';
 	const FILTERS: { id: Filter; label: string }[] = [
@@ -31,16 +32,16 @@
 		return [...byRound].sort(([a], [b]) => a - b);
 	});
 
-	const name = (entryId: string) => (ev && store ? entryName(ev, store.name, entryId) : '');
+	const name = (entryId: string) => (ev && reader ? entryName(ev, reader.name, entryId) : '');
 
 	function status(m: Match): string {
-		if (!ev || !store) return '';
+		if (!ev || !reader) return '';
 		if (m.status === 'pending') return `в очереди, ${ev.queue.indexOf(m.id) + 1}-й`;
 		if (m.status === 'on_court') {
 			const minutes = m.calledAt ? ` · ${formatMinutes(minutesSince(m.calledAt, clock.now))}` : '';
 			return `на корте ${m.court}${minutes}`;
 		}
-		return resultText(ev, store.name, m);
+		return resultText(ev, reader.name, m);
 	}
 
 	// Где и когда играли: «корт 1 · 12:05 · 16 мин»
@@ -65,7 +66,7 @@
 	<title>Матчи — {ev?.title ?? 'событие'}</title>
 </svelte:head>
 
-{#if store && ev}
+{#if reader && ev}
 	<div class="filters" role="tablist">
 		{#each FILTERS as f (f.id)}
 			<button role="tab" aria-selected={filter === f.id} onclick={() => (filter = f.id)}>
@@ -104,7 +105,7 @@
 		</ul>
 	{/each}
 
-	{#if resultFor}
+	{#if store && resultFor}
 		<ResultDialog {store} matchId={resultFor} onclose={() => (resultFor = null)} />
 	{/if}
 {/if}
@@ -147,7 +148,8 @@
 	}
 	.matches li {
 		display: grid;
-		grid-template-columns: 52px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.8fr) auto;
+		/* Колонка действий фиксированной ширины — туры выровнены между собой */
+		grid-template-columns: 52px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.8fr) 132px;
 		align-items: center;
 		gap: 8px;
 		min-height: 44px;

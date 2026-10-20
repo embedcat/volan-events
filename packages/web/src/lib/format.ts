@@ -81,3 +81,15 @@ export function formatTime(iso: string): string {
 	const pad = (n: number) => String(n).padStart(2, '0');
 	return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
+
+// «20.10.2026 14:32» по часам устройства
+export function formatDateTime(iso: string): string {
+	const date = new Date(iso);
+	const pad = (n: number) => String(n).padStart(2, '0');
+	return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${formatTime(iso)}`;
+}
+
+// Сейчас по часам устройства, ISO
+export function nowIso(): string {
+	return new Date().toISOString();
+}
