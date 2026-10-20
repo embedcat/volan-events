@@ -1,0 +1,40 @@
+# Зависимости
+node_modules/
+.pnpm-store/
+
+# Сборка
+dist/
+build/
+.svelte-kit/
+.vite/
+*.tsbuildinfo
+
+# Тесты
+coverage/
+playwright-report/
+test-results/
+
+# Локальная база сервера
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+
+# Окружение
+.env
+.env.*
+!.env.example
+
+# Логи
+*.log
+
+# Редакторы и ОС
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Личные настройки Claude Code
+.claude/settings.local.json

@@ -1,0 +1,23 @@
+# Все текстовые файлы — с LF, независимо от core.autocrlf
+* text=auto eol=lf
+
+# Скрипты Windows — с CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Двоичные
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+*.sqlite binary
+*.db binary
+
+# Сгенерированное — свёрнуто в диффах GitHub
+pnpm-lock.yaml linguist-generated=true
