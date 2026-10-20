@@ -214,6 +214,24 @@ type MatchResult = {
 - **Отдых игрока** = сейчас − `finishedAt` его последнего сыгранного матча.
 - **Подсказка на корт** — первый матч `queue`, в котором ни один игрок не на корте.
 
+## Выгрузка события (JSON)
+
+Кнопка у владельца в «Настройках»; файл собирается в браузере из подтверждённого сервером
+состояния и журнала (D147). Имя файла — «<дата> <название>.json».
+
+```ts
+type EventExport = {
+  format: 'volan-event';
+  formatVersion: 1;
+  exportedAt: string;                      // ISO, часы устройства
+  stateVersion: number;                    // EventState.stateVersion
+  version: number;                         // версия события = seq последней команды
+  event: EventState;
+  players: PublicPlayer[];                 // игроки заявок и фактических составов, без закрытых полей
+  commands: { seq: number; command: EventCommand }[];  // весь журнал по порядку
+};
+```
+
 ## Браузер: IndexedDB (Dexie)
 
 | Таблица | Содержимое |

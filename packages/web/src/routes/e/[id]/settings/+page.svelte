@@ -3,6 +3,7 @@
 	import CourtsSection from '#lib/ui/settings/CourtsSection.svelte';
 	import EntriesSection from '#lib/ui/settings/EntriesSection.svelte';
 	import EventSection from '#lib/ui/settings/EventSection.svelte';
+	import ExportSection from '#lib/ui/settings/ExportSection.svelte';
 	import Readiness from '#lib/ui/settings/Readiness.svelte';
 	import ScheduleSection from '#lib/ui/settings/ScheduleSection.svelte';
 	import TournamentSection from '#lib/ui/settings/TournamentSection.svelte';
@@ -26,6 +27,7 @@
 		<CategorySection {store} />
 		<EntriesSection {store} />
 		<ScheduleSection {store} />
+		<ExportSection {store} />
 		<TournamentSection {store} />
 	</div>
 {/if}
