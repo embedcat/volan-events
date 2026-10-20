@@ -98,7 +98,12 @@ Cookie: httpOnly, Secure, SameSite=Lax.
 
 ## `EventState`
 
-Один и тот же тип в `domain`, на сервере и в браузере.
+Один и тот же тип в `domain`, на сервере и в браузере. Источник истины — схемы Zod
+в `packages/domain/src/state.ts`, типы выводятся из них; ниже — упрощённый пересказ.
+
+- ID этапа и группы выводятся из ID категории: `<categoryId>/groups`, `<categoryId>/A`.
+- ID матчей, созданных командой, — `<ID команды>:<n>`.
+- Номер нового матча — наименьший свободный; у существующих матчей номер не меняется.
 
 ```ts
 type EventState = {
@@ -118,7 +123,6 @@ type EventState = {
   groups: Record<GroupId, Group>;
   matches: Record<MatchId, Match>;
   queue: MatchId[];                // общая очередь события
-  nextMatchNumber: number;
 };
 
 type Court = { number: number; enabled: boolean };   // 1..N
@@ -166,7 +170,8 @@ type Group = {
   id: GroupId;
   stageId: StageId;
   name: string;                    // A, B, …
-  entryIds: EntryId[];             // порядок жеребьёвки
+  entryIds: EntryId[];             // после составления расписания — порядок посева
+  scheduleSeed: number | null;     // зерно жеребьёвки для пересборки; null — расписания нет
   lots: EntryId[][];               // ручная расстановка при жребии, каждая — упорядоченный набор
 };
 
@@ -182,7 +187,7 @@ type Match = {
   court: number | null;
   calledAt: string | null;         // время устройства
   finishedAt: string | null;
-  lineupA: PlayerId[] | null;      // кто реально играл (фиксируется при вводе результата)
+  lineupA: PlayerId[] | null;      // кто реально играл — при вводе результата; у неявки null
   lineupB: PlayerId[] | null;
   result: MatchResult | null;
 };

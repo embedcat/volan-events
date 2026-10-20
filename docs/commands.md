@@ -78,8 +78,8 @@ type Command = {
 
 **`event.setVisibility`** `{ visibility }`
 
-**`event.setCourts`** `{ count }`
-— Можно: убираемые корты свободны.
+**`event.setCourts`** `{ count, enabled? }`
+— Можно: убираемые корты свободны. `enabled` — признаки всех кортов, передаёт отмена.
 
 **`court.setEnabled`** `{ court, enabled }`
 — Можно выключить: на корте нет матча (сначала перенести матч на другой корт).
@@ -108,9 +108,10 @@ type Command = {
 
 ### Участники
 
-**`entry.add`** `{ id, categoryId, players: EntryPlayer[] }`
+**`entry.add`** `{ id, categoryId, players: EntryPlayer[], position? }`
 — Можно: состав подходит к разряду (число игроков, пол), игроки ещё не заявлены
-в эту категорию.
+в эту категорию. `position` — место в группе, передаёт отмена удаления (от порядка зависит
+жеребьёвка).
 — Делает: если расписание группы есть и ни один её матч не вызван — расписание пересобирается;
 если вызван — матчи нового участника со всеми активными дописываются в конец очереди.
 — Рейтинг вне диапазона категории — предупреждение на клиенте, не ошибка.
@@ -124,21 +125,29 @@ type Command = {
 группы не вызван — расписание пересобирается.
 
 **`entry.withdraw`** `{ entryId }`
-— Можно: участник сейчас не на корте (сначала ввести отказ).
+— Можно: турнир идёт, участник сейчас не на корте (сначала ввести отказ).
 — Делает: несыгранные матчи → неявка в пользу соперника (`byWithdrawal`), убираются из очереди.
 
-**`entry.reinstate`** `{ entryId }`
-— Отмена снятия: неявки `byWithdrawal` удаляются, матчи возвращаются в конец очереди.
+**`entry.reinstate`** `{ entryId, queue? }`
+— Возврат снятого: неявки `byWithdrawal` против него снова становятся несыгранными матчами
+и встают в конец очереди (или на места из `queue` — так делает отмена). Если соперник тоже
+снят, неявка переходит в пользу возвращённого.
 
 ### Группа
 
-**`group.generateSchedule`** `{ groupId }`
-— Можно: в группе не меньше 2 участников, ни один матч группы не вызван.
-— Делает: круговое расписание по турам; ID матчей выводятся из ID команды; номера по порядку;
-матчи встают в очередь по турам. Повторный вызов пересобирает расписание.
+**`group.generateSchedule`** `{ groupId, seed }`
+— Можно: в группе не меньше 2 участников, нет снятых, ни один матч группы не вызван.
+— Делает: посев по рейтингу (равные и без рейтинга — жребий по `seed`), круговое расписание
+по турам; ID матчей `<ID команды>:<n>`, номера — наименьшие свободные; матчи встают
+в очередь по турам. Повторный вызов пересобирает расписание.
 
-**`group.resolveTie`** `{ groupId, entryIds }`
-— Можно: эти участники сейчас равны по всем показателям. Делает: фиксирует порядок по жребию.
+**`group.clearSchedule`** `{ groupId }` — убрать расписание, пока ни один матч не вызван.
+
+**`group.resolveTie`** `{ groupId, order }`
+— Можно: все матчи группы сыграны, а эти участники равны по всем показателям.
+— Делает: фиксирует порядок по жребию; прежний жребий для того же набора заменяется.
+
+**`group.clearTie`** `{ groupId, entryIds }` — снять жребий для этого набора.
 
 Жеребьёвка по группам (`stage.draw`, `group.moveEntry`) — этап 2.
 
@@ -160,7 +169,7 @@ type Command = {
 — Матч на корте → `finished`, `finishedAt = issuedAt`, корт свободен.
 — Матч в очереди (например, неявка) → `finished` без продолжительности, уходит из очереди.
 — Матч уже сыгран → правка; нужен совпадающий `expectedResult`.
-— Фиксирует `lineupA/lineupB` из текущего состава участников.
+— Фиксирует `lineupA/lineupB` из текущего состава участников (у неявки — нет).
 — Событие `finished` → нельзя (сначала `event.reopen`).
 
 **`match.clearResult`** `{ matchId, expectedResult }`
@@ -190,12 +199,7 @@ type Command = {
 
 | Команда | Обратная |
 |---|---|
-| `match.call` | `match.uncall` |
-| `match.uncall` | `match.call` на тот же корт (если свободен) |
-| `match.moveCourt` | `match.moveCourt` на прежний корт |
-| `match.recordResult` — первый ввод | `match.clearResult` |
-| `match.recordResult` — правка | `match.recordResult` с прежним результатом |
-| `match.clearResult` | `match.recordResult` с прежним результатом |
+| `match.call`, `match.uncall`, `match.moveCourt`, `match.recordResult`, `match.clearResult` | `match.restore` — матч целиком, как был: со временем вызова и местом в очереди |
 | `queue.move` | `queue.move` на прежнее место |
 | `court.setEnabled` | `court.setEnabled` с прежним значением |
 | `event.start` | `event.backToSetup` |
@@ -206,12 +210,14 @@ type Command = {
 | `category.delete` | `category.restore` с сохранённой категорией и участниками |
 | `category.update` | `category.update` с прежними значениями |
 | `entry.add` | `entry.remove` |
-| `entry.remove` | `entry.add` с тем же ID и составом |
+| `entry.remove` | `entry.add` с тем же ID, составом и местом в группе |
 | `entry.update` | `entry.update` с прежним составом |
-| `entry.withdraw` | `entry.reinstate` |
+| `entry.withdraw` | `entry.reinstate` с прежними местами матчей в очереди |
 | `entry.reinstate` | `entry.withdraw` |
-| `group.generateSchedule` | `group.clearSchedule` или пересборка прежнего порядка |
-| `group.resolveTie` | `group.resolveTie` с прежней расстановкой (или пустой) |
+| `group.generateSchedule` | `group.clearSchedule` или пересборка с прежним зерном (те же пары под теми же номерами, ID матчей новые) |
+| `group.clearSchedule` | `group.generateSchedule` с прежним зерном |
+| `group.resolveTie` | `group.resolveTie` с прежней расстановкой или `group.clearTie` |
+| `group.clearTie` | `group.resolveTie` с прежней расстановкой |
 | `player.create` | `player.delete` |
 | `player.update` | `player.update` с прежними значениями |
 | `player.merge` | `player.unmerge` |
@@ -219,9 +225,13 @@ type Command = {
 Дополнительные команды, нужные только для отмены:
 
 - **`event.backToSetup`** — `running → setup`; можно, пока ни один матч не вызван.
-- **`group.clearSchedule`** `{ groupId }` — убрать расписание; можно, пока ни один матч
-  группы не вызван.
-- **`category.restore`** `{ category, stages, groups, entries }` — вернуть удалённую категорию.
+- **`category.restore`** `{ category, stages, groups, entries, matches, queue }` — вернуть
+  удалённую категорию вместе с расписанием и местами матчей в очереди.
+- **`match.restore`** `{ match, queueIndex, expected }` — вернуть матч целиком, только если
+  сейчас он в точности равен `expected` (то, что получилось после отменяемой команды).
+  Если матч успели изменить с другого устройства — конфликт `match.stateChanged`.
+
+Команда, которая ничего не изменила (например, тот же счёт повторно), обратной не имеет.
 
 Если обратная команда уже недопустима (корт заняли с другого устройства), отмена
 не выполняется и показывается причина.
