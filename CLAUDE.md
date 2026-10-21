@@ -53,8 +53,8 @@
   - Сценарии Playwright — `packages/web/e2e/`: собранные сервер и интерфейс на портах 3100
     и 4174, чистая база во временной папке, учётные записи `admin` и `org`. Данные для
     сценария готовить командами API (`createRunningEvent` в `e2e/helpers.ts`), проверять
-    через интерфейс. Браузер — один раз: `pnpm --filter @volan/web exec playwright install
-    chromium`.
+    через интерфейс. Браузер ставится один раз:
+    `pnpm --filter @volan/web exec playwright install chromium`.
   - Стили: токены и общие классы в `src/app.css`, без UI-библиотек.
   - Настройки Vitest — в `vitest.config.ts`, отдельно от `vite.config.ts`.
 - Пакеты отдают исходники TS (`exports` → `src/index.ts`), отдельной сборки у них нет.
