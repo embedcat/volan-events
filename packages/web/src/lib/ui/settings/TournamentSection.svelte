@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { api } from '../../api.js';
 	import { type EventStore, closeEvent } from '../../event-store.svelte.js';
+	import { localDb } from '../../local-db.js';
 	import { apiErrorText } from '../../messages.js';
 	import { toasts } from '../../toasts.svelte.js';
 
@@ -22,6 +23,7 @@
 		try {
 			await api(`/events/${store.id}`, { method: 'DELETE' });
 			closeEvent(store.id);
+			await localDb.deleteEvent(store.id);
 			toasts.show(`Событие «${ev.title}» удалено`);
 			await goto(resolve('/my'));
 		} catch (error) {

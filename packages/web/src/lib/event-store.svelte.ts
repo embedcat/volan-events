@@ -9,6 +9,7 @@ import {
 import { ApiError, api } from './api.js';
 import { eventCommand } from './commands.js';
 import { applyRemote, rebase } from './event-sync.js';
+import { localDb } from './local-db.js';
 import { domainErrorText } from './messages.js';
 import type { PlayerName } from './names.js';
 import { type AnyCommand, type Outcome, outbox } from './outbox.svelte.js';
@@ -19,6 +20,8 @@ type LoadState = 'loading' | 'ready' | 'notFound' | 'forbidden' | 'offline';
 
 // Событие в браузере (организатор): подтверждённое сервером состояние, свои команды поверх,
 // изменения с других устройств — по SSE. См. docs/architecture.md, «Изменения как команды».
+// Подтверждённое состояние хранится в IndexedDB: без сети событие открывается из него,
+// а неотправленные команды — из очереди.
 export class EventStore {
 	readonly id: string;
 	confirmed = $state.raw<EventState | null>(null);
@@ -34,6 +37,10 @@ export class EventStore {
 
 	constructor(id: string) {
 		this.id = id;
+		// Свои команды этого события, не дошедшие до сервера (в том числе с прошлого запуска)
+		this.local = outbox.pending.filter(
+			(c): c is EventCommand => c.scope === 'event' && c.eventId === id
+		);
 		this.unsubscribe = outbox.subscribe((command, outcome) => this.onOutcome(command, outcome));
 	}
 
@@ -48,15 +55,46 @@ export class EventStore {
 			this.version = result.version;
 			this.names = result.players;
 			this.loadState = 'ready';
+			this.save();
 		} catch (error) {
 			if (this.loadState === 'ready') return; // уже есть что показать
-			this.loadState =
-				error instanceof ApiError && error.status === 404
-					? 'notFound'
-					: error instanceof ApiError && error.status === 403
-						? 'forbidden'
-						: 'offline';
+			const status = error instanceof ApiError ? error.status : 0;
+			if (status === 403) {
+				this.loadState = 'forbidden';
+			} else if (status === 404) {
+				// Создано на этом устройстве и ещё не дошло до сервера
+				this.loadState = this.creating() ? 'ready' : 'notFound';
+			} else {
+				await this.loadSaved();
+			}
 		}
+	}
+
+	// Без сети — последнее сохранённое; если его нет, но событие создано здесь — свои команды
+	private async loadSaved(): Promise<void> {
+		const saved = await localDb.getEvent(this.id);
+		if (saved) {
+			this.confirmed = saved.confirmed;
+			this.version = saved.version;
+			this.names = saved.names;
+			this.loadState = 'ready';
+		} else {
+			this.loadState = this.creating() ? 'ready' : 'offline';
+		}
+	}
+
+	private creating(): boolean {
+		return this.local.some((c) => c.type === 'event.create');
+	}
+
+	private save(): void {
+		if (!this.confirmed) return;
+		void localDb.putEvent({
+			id: this.id,
+			confirmed: this.confirmed,
+			version: this.version,
+			names: this.names
+		});
 	}
 
 	connect(): void {
@@ -119,6 +157,7 @@ export class EventStore {
 		if (step.kind === 'apply') {
 			this.confirmed = step.state;
 			this.version = step.version;
+			this.save();
 		} else if (step.kind === 'reload') {
 			void this.load();
 		}

@@ -1,6 +1,7 @@
 import type { DomainError, EventCommand, PlayerCommand, PlayerError } from '@volan/domain';
 import { ApiError, api } from './api.js';
 import { nowIso } from './format.js';
+import { localDb } from './local-db.js';
 
 export type AnyCommand = EventCommand | PlayerCommand;
 
@@ -17,13 +18,26 @@ export type OutboxStatus = 'idle' | 'sending' | 'offline' | 'unauthorized';
 type Sender = (commands: AnyCommand[]) => Promise<Outcome[]>;
 type Listener = (command: AnyCommand, outcome: Outcome) => void;
 
+// Где очередь переживает перезапуск приложения: в браузере — IndexedDB, в тестах — память
+export type OutboxStorage = {
+	load(): Promise<AnyCommand[]>;
+	add(command: AnyCommand): Promise<void>;
+	remove(ids: string[]): Promise<void>;
+};
+
+const inMemory: OutboxStorage = {
+	load: async () => [],
+	add: async () => undefined,
+	remove: async () => undefined
+};
+
 const BATCH = 200;
 const RETRY_MIN = 1000;
 const RETRY_MAX = 30_000;
 
 // Очередь команд на отправку. Команда остаётся в очереди, пока сервер не ответит по ней;
 // без связи — повтор с нарастающей паузой, при истёкшей сессии — стоп до нового входа.
-// В шаге 8 очередь переедет в IndexedDB.
+// Очередь хранится в IndexedDB и переживает закрытие приложения (D117).
 export class Outbox {
 	pending = $state.raw<AnyCommand[]>([]);
 	status = $state<OutboxStatus>('idle');
@@ -34,13 +48,29 @@ export class Outbox {
 	private readonly listeners = new Set<Listener>();
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	private readonly waiters = new Map<string, (outcome: Outcome) => void>();
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	private readonly seen = new Set<string>(); // команды этого запуска — уже в работе
 	private retryTimer: ReturnType<typeof setTimeout> | null = null;
 	private retryDelay = RETRY_MIN;
 
-	constructor(private readonly sender: Sender) {}
+	constructor(
+		private readonly sender: Sender,
+		private readonly storage: OutboxStorage = inMemory
+	) {}
+
+	// При запуске: неотправленное с прошлого раза — в начало очереди, затем отправка
+	async restore(): Promise<void> {
+		const saved = await this.storage.load();
+		const restored = saved.filter((c) => !this.seen.has(c.id));
+		restored.forEach((c) => this.seen.add(c.id));
+		this.pending = [...restored, ...this.pending];
+		void this.flush();
+	}
 
 	enqueue(command: AnyCommand): Promise<Outcome> {
+		this.seen.add(command.id);
 		this.pending = [...this.pending, command];
+		void this.storage.add(command);
 		const outcome = new Promise<Outcome>((resolve) => this.waiters.set(command.id, resolve));
 		void this.flush();
 		return outcome;
@@ -75,6 +105,7 @@ export class Outbox {
 		this.retryDelay = RETRY_MIN;
 		this.lastSyncAt = nowIso();
 		this.pending = this.pending.filter((c) => !batch.includes(c));
+		void this.storage.remove(batch.map((c) => c.id));
 		batch.forEach((command, i) => {
 			const outcome = outcomes[i] ?? { status: 'invalid', issues: [] };
 			this.waiters.get(command.id)?.(outcome);
@@ -107,5 +138,10 @@ export class Outbox {
 
 export const outbox = new Outbox(
 	async (commands) =>
-		(await api<{ results: Outcome[] }>('/commands', { body: { commands } })).results
+		(await api<{ results: Outcome[] }>('/commands', { body: { commands } })).results,
+	{
+		load: localDb.loadOutbox,
+		add: localDb.addCommand,
+		remove: localDb.removeCommands
+	}
 );

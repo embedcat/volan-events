@@ -11,7 +11,8 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@volan/domain": "workspace:*"
+		"@volan/domain": "workspace:*",
+		"dexie": "^4.4.6"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-static": "^4.0.0",

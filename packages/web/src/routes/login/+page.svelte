@@ -16,12 +16,18 @@
 		busy = true;
 		error = null;
 		try {
-			await session.login(login.trim(), password);
-			outbox.resume(); // если команды ждали нового входа
+			const { switched } = await session.login(login.trim(), password);
 			const next = page.url.searchParams.get('next');
 			// Возврат на страницу, с которой отправили на вход; путь проверен — только свой сайт
+			const target = next?.startsWith('/') && !next.startsWith('//') ? next : resolve('/my');
+			if (switched) {
+				// Другой пользователь: данные прежнего стёрты — начать с чистой памяти
+				location.assign(target);
+				return;
+			}
+			outbox.resume(); // если команды ждали нового входа
 			// eslint-disable-next-line svelte/no-navigation-without-resolve
-			await goto(next?.startsWith('/') && !next.startsWith('//') ? next : resolve('/my'));
+			await goto(target);
 		} catch (e) {
 			error = apiErrorText(e);
 		} finally {

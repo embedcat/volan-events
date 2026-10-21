@@ -2,11 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import type { MatchFormat } from '@volan/domain';
-	import { eventCommand } from '#lib/commands.js';
+	import { connection } from '#lib/connection.svelte.js';
+	import { openEvent } from '#lib/event-store.svelte.js';
 	import { todayIso } from '#lib/format.js';
 	import { uuidv7 } from '#lib/ids.js';
 	import { domainErrorText } from '#lib/messages.js';
-	import { outbox } from '#lib/outbox.svelte.js';
 	import { session } from '#lib/session.svelte.js';
 	import FormatFields from '#lib/ui/FormatFields.svelte';
 
@@ -18,37 +18,34 @@
 	let error = $state<string | null>(null);
 	let waiting = $state(false);
 
+	// Событие создаётся сразу на устройстве (без сети — тоже, D31) и уходит на сервер через очередь
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
 		if (!session.user) return;
 		error = null;
 		waiting = true;
 		const id = uuidv7();
-		const outcome = await outbox.enqueue(
-			eventCommand(id, {
-				type: 'event.create',
-				payload: {
-					title: title.trim(),
-					date,
-					venue: venue.trim() || null,
-					courts,
-					// Решающая короче — только при игре до 21
-					defaultFormat: {
-						...format,
-						deciderPoints: format.points === 15 ? 15 : format.deciderPoints
-					},
-					ownerId: session.user.id
-				}
-			})
-		);
+		const result = openEvent(id).dispatch({
+			type: 'event.create',
+			payload: {
+				title: title.trim(),
+				date,
+				venue: venue.trim() || null,
+				courts,
+				// Решающая короче — только при игре до 21
+				defaultFormat: {
+					...format,
+					deciderPoints: format.points === 15 ? 15 : format.deciderPoints
+				},
+				ownerId: session.user.id
+			}
+		});
 		waiting = false;
-		if (outcome.status === 'applied' || outcome.status === 'duplicate') {
-			await goto(resolve('/e/[id]/settings', { id }));
-		} else if (outcome.status === 'rejected') {
-			error = domainErrorText(outcome.error);
-		} else {
-			error = 'Сервер не принял событие';
+		if (!result.ok) {
+			error = domainErrorText(result.error);
+			return;
 		}
+		await goto(resolve('/e/[id]/settings', { id }));
 	}
 </script>
 
@@ -80,8 +77,8 @@
 	{#if error}
 		<p class="error-text">{error}</p>
 	{/if}
-	{#if waiting && outbox.status === 'offline'}
-		<p class="muted">Нет связи — событие будет создано, когда связь появится.</p>
+	{#if !connection.online}
+		<p class="muted">Нет связи — событие создастся на этом устройстве и уйдёт на сервер позже.</p>
 	{/if}
 	<div class="row">
 		<button class="btn primary" type="submit" disabled={waiting}>Создать</button>

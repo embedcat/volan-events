@@ -234,13 +234,14 @@ type EventExport = {
 
 ## Браузер: IndexedDB (Dexie)
 
+База `volan` (`packages/web/src/lib/local-db.ts`):
+
 | Таблица | Содержимое |
 |---|---|
-| `events` | `{ id, confirmed: EventState, confirmedVersion }` — последнее подтверждённое сервером |
-| `outbox` | команды, ещё не принятые сервером, по порядку |
-| `players` | кеш справочника с `version` |
-| `rejected` | копия списка отклонённых команд |
-| `meta` | `deviceId`, текущий пользователь, время последней синхронизации |
+| `events` | `{ id, confirmed: EventState, version, names }` — последнее подтверждённое сервером |
+| `outbox` | команды, ещё не принятые сервером, по порядку (`seq`) |
+| `players` | копия справочника (свои записи — с закрытыми полями) |
+| `meta` | `deviceId`, `user` (последний вошедший), `registryRevision`, `myEvents` (список «Мои события»), `rejected` (копия списка конфликтов) |
 
 На экране — `confirmed` с применёнными поверх командами из `outbox`. Когда приходят чужие
 команды, `confirmed` продвигается, а `outbox` применяется к нему заново.

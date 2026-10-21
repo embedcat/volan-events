@@ -1,3 +1,5 @@
+import type { EventCommand } from '@volan/domain';
+
 // Краткое описание события в списках (ответ GET /api/events)
 export type EventSummary = {
 	id: string;
@@ -20,4 +22,20 @@ export function groupEvents(events: EventSummary[], today: string) {
 		.filter((e) => e.progress === 'finished' || (e.progress === 'setup' && e.date < today))
 		.sort((a, b) => b.date.localeCompare(a.date));
 	return { running, upcoming, past };
+}
+
+// Событие, созданное на этом устройстве и ещё не дошедшее до сервера
+export function pendingSummary(command: EventCommand): EventSummary | null {
+	if (command.type !== 'event.create') return null;
+	const { title, date, venue, ownerId } = command.payload;
+	return {
+		id: command.eventId,
+		title,
+		date,
+		venue,
+		visibility: 'draft',
+		progress: 'setup',
+		ownerId,
+		updatedAt: command.issuedAt
+	};
 }

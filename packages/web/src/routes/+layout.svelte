@@ -1,8 +1,8 @@
 <script lang="ts">
 	import '../app.css';
-	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { conflicts } from '#lib/conflicts.svelte.js';
+	import { logout } from '#lib/logout.js';
 	import { session } from '#lib/session.svelte.js';
 	import { theme } from '#lib/theme.svelte.js';
 	import Menu from '#lib/ui/Menu.svelte';
@@ -23,11 +23,6 @@
 		if (session.user) void conflicts.load();
 		else conflicts.clear();
 	});
-
-	async function logout() {
-		await session.logout();
-		await goto(resolve('/'));
-	}
 </script>
 
 <header class="top no-print">

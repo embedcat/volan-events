@@ -56,7 +56,8 @@
 
 ## Оффлайн
 
-- Приложение кешируется service worker'ом (vite-plugin-pwa) и открывается без сети.
+- Приложение кешируется service worker'ом (встроенным в SvelteKit, D148) и открывается
+  без сети. Новая версия — плашка «Обновить» (D149).
 - Каждое открытое событие и справочник игроков сохраняются в IndexedDB (Dexie).
 - Без интернета можно создать событие и новых игроков — они уйдут на сервер позже.
 - Вход требует сети хотя бы один раз. Дальше сессия живёт долго и работает без сети.
@@ -119,11 +120,11 @@ SQLite через Drizzle (драйвер better-sqlite3).
 | База | SQLite, Drizzle ORM, better-sqlite3 |
 | Схемы и проверка данных | Zod (общие для клиента и сервера) |
 | Интерфейс | Svelte 5, SvelteKit 3 в режиме SPA (adapter-static), Vite 8 |
-| Работа без сети | vite-plugin-pwa (service worker), Dexie (IndexedDB) |
+| Работа без сети | service worker SvelteKit, Dexie (IndexedDB) |
 | Обновления | SSE + HTTP |
 | Монорепозиторий | pnpm 12 workspaces, каталог общих версий |
 | Проверка кода | ESLint (typescript-eslint, eslint-plugin-svelte) + Prettier |
-| Тесты | Vitest 5; позже Playwright для сценариев в браузере |
+| Тесты | Vitest 5; Playwright (Chromium) для сценариев в браузере |
 | CI | GitHub Actions: lint, typecheck, test, build на push в master и PR |
 | Оформление | свой минимальный CSS, светлая и тёмная тема по системе, без UI-библиотек |
 

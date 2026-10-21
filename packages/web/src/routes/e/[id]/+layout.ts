@@ -15,7 +15,7 @@ export const load: LayoutLoad = async ({ params, parent }) => {
 		const store = openEvent(params.id);
 		if (store.loadState !== 'ready') await store.load();
 		if (store.loadState !== 'forbidden') {
-			if (!registry.loaded) void registry.sync().catch(() => undefined);
+			void registry.sync().catch(() => undefined); // дельта по ревизии — дёшево
 			return { store, guest: null };
 		}
 		foreign.add(`${session.user.id}/${params.id}`);

@@ -1,3 +1,5 @@
+import { connection } from './connection.svelte.js';
+
 // Запросы к серверу: JSON туда и обратно, ошибки — ApiError с кодом из ответа
 export class ApiError extends Error {
 	constructor(
@@ -28,8 +30,15 @@ export async function api<T>(
 			signal: init.signal
 		});
 	} catch {
+		connection.online = false;
 		throw new ApiError(0, 'network');
 	}
+	// 502–504 — сервер за прокси недоступен: для нас это тоже «нет связи»
+	if (response.status >= 502 && response.status <= 504) {
+		connection.online = false;
+		throw new ApiError(0, 'network');
+	}
+	connection.online = true;
 	const data = await response.json().catch(() => null);
 	if (!response.ok) {
 		const error = (data?.error ?? {}) as Record<string, unknown>;

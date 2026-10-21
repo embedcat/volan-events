@@ -18,6 +18,9 @@
 	<a class="btn primary" href={resolve('/my/new')}>Создать событие</a>
 </div>
 
+{#if data.offline}
+	<p class="muted">Нет связи — список на момент последней загрузки.</p>
+{/if}
 {#if data.error}
 	<p class="error-text">{data.error}</p>
 {:else if data.events.length === 0}

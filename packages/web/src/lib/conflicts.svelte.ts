@@ -1,5 +1,6 @@
 import type { DomainError, PlayerError } from '@volan/domain';
 import { api } from './api.js';
+import { localDb } from './local-db.js';
 import { type AnyCommand, outbox } from './outbox.svelte.js';
 
 // Отклонённая сервером команда — со всех устройств пользователя (docs/screens.md, «/sync»)
@@ -29,14 +30,17 @@ class Conflicts {
 		try {
 			this.items = (await api<{ rejected: Rejected[] }>('/rejected')).rejected;
 			this.loaded = true;
+			void localDb.setMeta('rejected', this.items);
 		} catch {
-			// нет связи или сессии — покажем, что было
+			// Нет связи — список с прошлого раза
+			if (!this.loaded) this.items = (await localDb.getMeta<Rejected[]>('rejected')) ?? [];
 		}
 	}
 
 	async resolve(id: string, resolution: 'discarded' | 'reapplied'): Promise<void> {
 		await api(`/rejected/${id}/resolve`, { body: { resolution } });
 		this.items = this.items.filter((r) => r.id !== id);
+		void localDb.setMeta('rejected', this.items);
 	}
 
 	clear(): void {

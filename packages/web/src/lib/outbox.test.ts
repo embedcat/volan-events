@@ -1,7 +1,7 @@
 import type { EventCommand } from '@volan/domain';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from './api.js';
-import { type AnyCommand, Outbox, type Outcome } from './outbox.svelte.js';
+import { type AnyCommand, Outbox, type OutboxStorage, type Outcome } from './outbox.svelte.js';
 
 function command(id: string): EventCommand {
 	return {
@@ -86,5 +86,35 @@ describe('Outbox', () => {
 		outbox.subscribe((c, o) => seen.push([c.id, o]));
 		await outbox.enqueue(command('a'));
 		expect(seen).toEqual([['a', { status: 'rejected', error: { code: 'event.noSchedule' } }]]);
+	});
+
+	it('очередь переживает перезапуск: сохранённое уходит первым, отправленное стирается', async () => {
+		// хранилище, как IndexedDB: команды по порядку добавления
+		const saved = new Map<string, AnyCommand>();
+		const storage: OutboxStorage = {
+			load: async () => [...saved.values()],
+			add: async (c) => void saved.set(c.id, c),
+			remove: async (ids) => ids.forEach((id) => saved.delete(id))
+		};
+
+		// первый запуск: связи нет, команда осталась в хранилище
+		const offline = new Outbox(async () => {
+			throw new ApiError(0, 'network');
+		}, storage);
+		void offline.enqueue(command('a'));
+		await vi.advanceTimersByTimeAsync(0);
+		expect([...saved.keys()]).toEqual(['a']);
+
+		// второй запуск: связь есть
+		const batches: string[][] = [];
+		const online = new Outbox(async (commands) => {
+			batches.push(commands.map((c) => c.id));
+			return applied(commands);
+		}, storage);
+		await online.restore(); // при запуске — до новых команд
+		await online.enqueue(command('b'));
+		await vi.advanceTimersByTimeAsync(0);
+		expect(batches.flat()).toEqual(['a', 'b']);
+		expect(saved.size).toBe(0);
 	});
 });

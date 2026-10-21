@@ -8,6 +8,7 @@ import {
 } from '@volan/domain';
 import { api } from './api.js';
 import { playerCommand } from './commands.js';
+import { localDb } from './local-db.js';
 import { domainErrorText } from './messages.js';
 import { normalize } from './names.js';
 import { outbox } from './outbox.svelte.js';
@@ -19,27 +20,51 @@ export type RegistryPlayer = PublicPlayer &
 
 type ServerPlayer = RegistryPlayer | { id: string; deleted: true };
 
-// Справочник игроков в браузере: синхронизация по ревизии (D109), правки — командами через очередь
+// Справочник игроков в браузере: синхронизация по ревизии (D109), правки — командами через очередь.
+// Копия лежит в IndexedDB: без сети поиск и создание игроков работают.
 class Registry {
 	players = $state.raw<Record<string, RegistryPlayer>>({});
 	loaded = $state(false);
 	private revision = 0;
 	private syncing: Promise<void> | null = null;
 
+	// При запуске — из IndexedDB, дальше догоняется sync()
+	async restore(): Promise<void> {
+		const [players, revision] = await Promise.all([
+			localDb.loadPlayers(),
+			localDb.getMeta<number>('registryRevision')
+		]);
+		if (!revision) return;
+		this.players = Object.fromEntries(players.map((p) => [p.id, p]));
+		this.revision = revision;
+		this.loaded = true;
+	}
+
 	sync(): Promise<void> {
 		this.syncing ??= (async () => {
 			try {
+				const full = this.revision === 0;
 				const result = await api<{ revision: number; players: ServerPlayer[] }>(
 					`/players?since=${this.revision}`
 				);
-				const next = { ...this.players };
+				const next = full ? {} : { ...this.players };
+				const upsert: RegistryPlayer[] = [];
+				const deleted: string[] = [];
 				for (const player of result.players) {
-					if ('deleted' in player) delete next[player.id];
-					else next[player.id] = player;
+					if ('deleted' in player) {
+						delete next[player.id];
+						deleted.push(player.id);
+					} else {
+						next[player.id] = player;
+						upsert.push(player);
+					}
 				}
 				this.players = next;
 				this.revision = result.revision;
 				this.loaded = true;
+				if (full) await localDb.clearPlayers();
+				await localDb.savePlayers(upsert, deleted);
+				await localDb.setMeta('registryRevision', result.revision);
 			} finally {
 				this.syncing = null;
 			}
@@ -81,6 +106,7 @@ class Registry {
 		for (const player of result.upsert) next[player.id] = player;
 		for (const id of result.deleted) delete next[id];
 		this.players = next;
+		void localDb.savePlayers(result.upsert, result.deleted);
 
 		void outbox.enqueue(command).then((outcome) => {
 			if (outcome.status === 'applied' || outcome.status === 'duplicate') return;

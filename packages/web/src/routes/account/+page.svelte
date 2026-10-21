@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { api } from '#lib/api.js';
 	import { formatDateTime } from '#lib/format.js';
+	import { logout } from '#lib/logout.js';
 	import { apiErrorText } from '#lib/messages.js';
 	import { session } from '#lib/session.svelte.js';
 	import { type ThemeMode, theme } from '#lib/theme.svelte.js';
@@ -39,8 +38,7 @@
 
 	async function signOut(device: Device) {
 		if (device.current) {
-			await session.logout();
-			await goto(resolve('/'));
+			await logout();
 			return;
 		}
 		try {

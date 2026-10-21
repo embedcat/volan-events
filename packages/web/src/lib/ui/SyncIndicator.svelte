@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { conflicts } from '../conflicts.svelte.js';
+	import { connection } from '../connection.svelte.js';
 	import { outbox } from '../outbox.svelte.js';
 
 	const waiting = $derived(outbox.pending.length);
@@ -9,7 +10,7 @@
 <!-- Состояние связи у организатора (docs/screens.md, «Шапка и индикатор связи») -->
 {#if outbox.status === 'unauthorized'}
 	<a class="sync bad" href={resolve('/login')}>Вход истёк — войдите снова · ждут: {waiting}</a>
-{:else if outbox.status === 'offline'}
+{:else if outbox.status === 'offline' || !connection.online}
 	<span class="sync bad">○ нет связи · ждут отправки: {waiting}</span>
 {:else if conflicts.items.length > 0}
 	<a class="sync warn" href={resolve('/sync')}>▲ конфликты: {conflicts.items.length}</a>
