@@ -19,9 +19,9 @@ export default defineConfig({
 		})
 	],
 	server: {
-		// В разработке API обслуживает отдельный процесс @volan/server
+		// В разработке API обслуживает отдельный процесс @volan/server (порт — как у сервера)
 		proxy: {
-			'/api': 'http://127.0.0.1:3000'
+			'/api': `http://127.0.0.1:${process.env.API_PORT ?? 3000}`
 		}
 	}
 });

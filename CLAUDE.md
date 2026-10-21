@@ -50,6 +50,11 @@
     `#lib/pwa.js`, только в сборке. Встроенный браузер Claude service worker не регистрирует:
     проверять в Chromium из Playwright на `pnpm build` + `vite preview` (порт 4173).
   - Иконки — `pnpm --filter @volan/web icons` (рисуются в Chromium из Playwright).
+  - Сценарии Playwright — `packages/web/e2e/`: собранные сервер и интерфейс на портах 3100
+    и 4174, чистая база во временной папке, учётные записи `admin` и `org`. Данные для
+    сценария готовить командами API (`createRunningEvent` в `e2e/helpers.ts`), проверять
+    через интерфейс. Браузер — один раз: `pnpm --filter @volan/web exec playwright install
+    chromium`.
   - Стили: токены и общие классы в `src/app.css`, без UI-библиотек.
   - Настройки Vitest — в `vitest.config.ts`, отдельно от `vite.config.ts`.
 - Пакеты отдают исходники TS (`exports` → `src/index.ts`), отдельной сборки у них нет.
@@ -65,6 +70,7 @@
 | `pnpm typecheck` | tsc в domain и server, svelte-check в web         |
 | `pnpm test`      | Vitest во всех пакетах                            |
 | `pnpm build`     | сборка сервера и интерфейса                       |
+| `pnpm e2e`       | сборка и сценарии Playwright (Chromium)           |
 
 Сервер: `pnpm --filter @volan/server db:generate -- --name <имя>` — миграция из схемы;
 `pnpm --filter @volan/server cli user:create-superuser <логин>` — суперюзер;

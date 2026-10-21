@@ -13,7 +13,8 @@
 		"test": "pnpm -r test",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
-		"check": "pnpm lint && pnpm typecheck && pnpm test"
+		"check": "pnpm lint && pnpm typecheck && pnpm test",
+		"e2e": "pnpm build && pnpm --filter @volan/web e2e"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
