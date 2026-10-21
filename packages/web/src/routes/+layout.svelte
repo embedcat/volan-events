@@ -1,8 +1,10 @@
 <script lang="ts">
 	import '../app.css';
+	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { conflicts } from '#lib/conflicts.svelte.js';
 	import { logout } from '#lib/logout.js';
+	import { registerServiceWorker } from '#lib/pwa.js';
 	import { session } from '#lib/session.svelte.js';
 	import { theme } from '#lib/theme.svelte.js';
 	import Menu from '#lib/ui/Menu.svelte';
@@ -17,6 +19,8 @@
 		light: 'Тема: светлая',
 		dark: 'Тема: тёмная'
 	};
+
+	onMount(registerServiceWorker);
 
 	// Отклонённые команды со всех устройств — при входе (индикатор «▲ конфликты»)
 	$effect(() => {

@@ -3,6 +3,7 @@ export type Toast = {
 	text: string;
 	kind: 'info' | 'error';
 	action?: { label: string; run: () => void };
+	sticky?: boolean; // не исчезает сама и не вытесняется новыми (новая версия приложения)
 };
 
 const LIFETIME = { info: 8000, error: 12000 };
@@ -17,10 +18,13 @@ class Toasts {
 			id: this.next++,
 			text,
 			kind: options.kind ?? 'info',
-			action: options.action
+			action: options.action,
+			sticky: options.sticky
 		};
-		this.items = [...this.items.slice(-2), toast];
-		setTimeout(() => this.dismiss(toast.id), LIFETIME[toast.kind]);
+		const sticky = this.items.filter((t) => t.sticky);
+		const recent = this.items.filter((t) => !t.sticky).slice(-2);
+		this.items = [...sticky, ...recent, toast];
+		if (!toast.sticky) setTimeout(() => this.dismiss(toast.id), LIFETIME[toast.kind]);
 		return toast.id;
 	}
 

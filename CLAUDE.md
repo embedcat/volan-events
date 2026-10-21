@@ -44,6 +44,12 @@
     так экран обновляется сам.
   - Логика без интерфейса (`event-view.ts`, `score-entry.ts` и т. п.) — отдельными
     модулями с тестами рядом.
+  - Данные без сети — IndexedDB через `#lib/local-db.js` (Dexie); очередь команд, события,
+    справочник и пользователь восстанавливаются при запуске (`src/routes/+layout.ts`).
+  - Service worker — `src/service-worker/` (свой `tsconfig.json`), регистрация —
+    `#lib/pwa.js`, только в сборке. Встроенный браузер Claude service worker не регистрирует:
+    проверять в Chromium из Playwright на `pnpm build` + `vite preview` (порт 4173).
+  - Иконки — `pnpm --filter @volan/web icons` (рисуются в Chromium из Playwright).
   - Стили: токены и общие классы в `src/app.css`, без UI-библиотек.
   - Настройки Vitest — в `vitest.config.ts`, отдельно от `vite.config.ts`.
 - Пакеты отдают исходники TS (`exports` → `src/index.ts`), отдельной сборки у них нет.

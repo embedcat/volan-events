@@ -11,7 +11,11 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			// SPA: все адреса отдаются одной страницей-оболочкой, маршрутизация в браузере
-			adapter: adapter({ fallback: 'index.html' })
+			adapter: adapter({ fallback: 'index.html' }),
+			// Регистрирует сам интерфейс (#lib/pwa.svelte.js): только в сборке и с плашкой «Обновить»
+			serviceWorker: { register: false },
+			// Абсолютные пути к файлам: оболочка из кеша service worker одинакова на любом адресе
+			paths: { relative: false }
 		})
 	],
 	server: {
